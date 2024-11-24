@@ -16,6 +16,7 @@
     "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.4.20",
     "clsx": "^2.1.1",
+    "firebase": "^11.0.2",
     "next": "15.0.3",
     "postcss": "^8.4.49",
     "prism-react-renderer": "^2.4.0",
