@@ -1,14 +1,20 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Project, Stakeholder } from "@/types";
-import { createProject, updateProject } from "@/app/services/projects";
+import { useState, useEffect } from "react"
+import { Project, Stakeholder } from "@/types"
+import { createProject, updateProject } from "@/app/services/projects"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface ProjectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  project?: Project; // If provided, edit mode is enabled
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  project?: Project
 }
 
 export default function ProjectModal({ isOpen, onClose, onSuccess, project }: ProjectModalProps) {
@@ -17,43 +23,43 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
     budget: 0,
     client: "",
     deadline: "",
-  });
-  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
-  const [newStakeholder, setNewStakeholder] = useState<Stakeholder>({ name: "", role: "", contact: "" });
-  const [loading, setLoading] = useState(false);
+  })
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([])
+  const [newStakeholder, setNewStakeholder] = useState<Stakeholder>({ name: "", role: "", contact: "" })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (project) {
-      setFormData(project);
-      setStakeholders(project.stakeholders || []);
+      setFormData(project)
+      setStakeholders(project.stakeholders || [])
     }
-  }, [project]);
+  }, [project])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
   const handleAddStakeholder = () => {
     if (newStakeholder.name && newStakeholder.role && newStakeholder.contact) {
-      setStakeholders([...stakeholders, newStakeholder]);
-      setNewStakeholder({ name: "", role: "", contact: "" });
+      setStakeholders([...stakeholders, newStakeholder])
+      setNewStakeholder({ name: "", role: "", contact: "" })
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { name, budget, client, deadline } = formData;
+    e.preventDefault()
+    const { name, budget, client, deadline } = formData
 
     if (!name || !budget || !client || !deadline) {
-      alert("All fields are required!");
-      return;
+      alert("All fields are required!")
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
       const projectData: Project & { stakeholders: Stakeholder[] } = {
-        projectId: project?.projectId || '', // Add projectId field
+        projectId: project?.projectId || '',
         name,
         budget: Number(budget),
         client,
@@ -61,123 +67,130 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
         spent: project?.spent || 0,
         paymentTransferred: project?.paymentTransferred || 0,
         stakeholders: stakeholders || [],
-      };
-
-      if (project?.id) {
-        await updateProject(project.id, projectData);
-        alert("Project updated successfully!");
-      } else {
-        await createProject(projectData);
-        alert("Project created successfully!");
       }
 
-      onSuccess();
-      onClose();
+      if (project?.id) {
+        await updateProject(project.id, projectData)
+      } else {
+        await createProject(projectData)
+      }
+
+      onSuccess()
+      onClose()
     } catch (error) {
-      console.error("Error saving project:", error);
-      alert("An error occurred.");
+      console.error("Error saving project:", error)
+      alert("An error occurred.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-  if (!isOpen) return null;
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-        <h2 className="text-xl font-bold mb-4">{project ? "Edit Project" : "Create Project"}</h2>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{project ? "Edit Project" : "Create Project"}</DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Project Name"
-            className="w-full mb-4 border rounded p-2"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <input
-            type="number"
-            name="budget"
-            placeholder="Budget"
-            className="w-full mb-4 border rounded p-2"
-            value={formData.budget}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="client"
-            placeholder="Client Name"
-            className="w-full mb-4 border rounded p-2"
-            value={formData.client}
-            onChange={handleChange}
-          />
-          <input
-          placeholder="Deadline"
-            type="date"
-            name="deadline"
-            className="w-full mb-4 border rounded p-2"
-            value={formData.deadline || ""}
-            onChange={handleChange}
-          />
-
-          <div className="mb-4">
-            <h3 className="text-sm font-bold">Stakeholders</h3>
-            <input
-              type="text"
-              placeholder="Name"
-              className="w-full mb-2 border rounded p-2"
-              value={newStakeholder.name}
-              onChange={(e) => setNewStakeholder({ ...newStakeholder, name: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Role"
-              className="w-full mb-2 border rounded p-2"
-              value={newStakeholder.role}
-              onChange={(e) => setNewStakeholder({ ...newStakeholder, role: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Contact"
-              className="w-full mb-2 border rounded p-2"
-              value={newStakeholder.contact}
-              onChange={(e) => setNewStakeholder({ ...newStakeholder, contact: e.target.value })}
-            />
-            <button
-              type="button"
-              onClick={handleAddStakeholder}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Add Stakeholder
-            </button>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget" className="text-right">
+                Budget
+              </Label>
+              <Input
+                id="budget"
+                name="budget"
+                type="number"
+                value={formData.budget}
+                onChange={handleChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="client" className="text-right">
+                Client
+              </Label>
+              <Input
+                id="client"
+                name="client"
+                value={formData.client}
+                onChange={handleChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="deadline" className="text-right">
+                Deadline
+              </Label>
+              <Input
+                id="deadline"
+                name="deadline"
+                type="date"
+                value={formData.deadline}
+                onChange={handleChange}
+                className="col-span-3"
+              />
+            </div>
           </div>
 
-          <ul className="list-disc ml-6 text-sm mb-4">
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Stakeholders</h3>
+            <div className="grid gap-2">
+              <Input
+                placeholder="Name"
+                value={newStakeholder.name}
+                onChange={(e) => setNewStakeholder({ ...newStakeholder, name: e.target.value })}
+              />
+              <Input
+                placeholder="Role"
+                value={newStakeholder.role}
+                onChange={(e) => setNewStakeholder({ ...newStakeholder, role: e.target.value })}
+              />
+              <Input
+                placeholder="Contact"
+                value={newStakeholder.contact}
+                onChange={(e) => setNewStakeholder({ ...newStakeholder, contact: e.target.value })}
+              />
+              <Button type="button" onClick={handleAddStakeholder}>
+                Add Stakeholder
+              </Button>
+            </div>
+          </div>
+
+          <ScrollArea className="h-[200px] mt-4">
             {stakeholders.map((stakeholder, index) => (
-              <li key={index}>
-                {stakeholder.name} ({stakeholder.role}) - {stakeholder.contact}
-              </li>
+              <Card key={index} className="mb-2">
+                <CardContent className="p-4">
+                  <p className="font-medium">{stakeholder.name}</p>
+                  <p className="text-sm text-muted-foreground">{stakeholder.role}</p>
+                  <p className="text-sm">{stakeholder.contact}</p>
+                </CardContent>
+              </Card>
             ))}
-          </ul>
+          </ScrollArea>
 
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-              disabled={loading}
-            >
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
-  );
+      </DialogContent>
+    </Dialog>
+  )
 }

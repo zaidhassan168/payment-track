@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 import { Payment } from "@/types";
 
 export async function POST(req: Request) {
@@ -19,13 +19,24 @@ export async function POST(req: Request) {
       timestamp: data.timestamp || new Date().toISOString(),
     });
 
-    return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
+    const projectRef = doc(db, "projects", data.projectId);
+    const projectSnapshot = await getDoc(projectRef);
+
+    if (!projectSnapshot.exists()) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const currentSpent = projectSnapshot.data().spent || 0;
+    await updateDoc(projectRef, {
+      spent: currentSpent + data.amount,
+    });
+
+    return NextResponse.json({ id: paymentRef.id, message: "Payment created and project updated successfully" }, { status: 201 });
   } catch (error) {
     console.error("Error creating payment:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
 
 // // GET: Retrieve all payments
 // export async function GET() {
