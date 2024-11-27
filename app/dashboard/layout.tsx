@@ -1,5 +1,6 @@
 'use client';
 import { Sidebar } from "./components/sidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 // import { Navbar } from "./components/navbar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -14,9 +15,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* <Navbar /> */}
 
         {/* Page Content */}
+        <ScrollArea className="h-full w-full">
+
         <main className="p-6 flex-grow bg-gray-100">
           {children}
         </main>
+        </ScrollArea>
+
       </div>
     </div>
   );
