@@ -54,3 +54,24 @@ export async function getProjects(): Promise<Project[]> {
   
     return response.json();
   }
+
+
+  export async function getProjectById(id: string): Promise<Project> {
+    const response = await fetch(`/api/projects/${id}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch project");
+    }
+    return response.json();
+  }
+  
+  // export async function updateProject(id: string, projectData: Project) {
+  //   const response = await fetch(`/api/projects/${id}`, {
+  //     method: "PUT",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify(projectData),
+  //   });
+  //   if (!response.ok) {
+  //     throw new Error("Failed to update project");
+  //   }
+  //   return response.json();
+  // }
