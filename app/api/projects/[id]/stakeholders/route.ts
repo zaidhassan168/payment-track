@@ -1,25 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/firebase";
-import { collection, getDocs, query, getDoc, doc, addDoc } from "firebase/firestore";
-import { Stakeholder } from "@/types";
-import { Project } from "@/types";
+import { collection, getDocs } from "firebase/firestore";
 
-// POST: Add a new stakeholder to a project
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, context: { params: { id: string } }) {
   try {
-    const projectId = params.id;
-    const data: Stakeholder = await req.json();
+    const { id: projectId } = context.params;
 
-    if (!data.name || !data.role || !data.contact) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    const stakeholdersRef = collection(db, `projects/${projectId}/stakeholders`);
+    const stakeholdersSnapshot = await getDocs(stakeholdersRef);
 
-    const stakeholderRef = await addDoc(collection(db, `projects/${projectId}/stakeholders`), data);
+    const stakeholders = stakeholdersSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
-    return NextResponse.json({ id: stakeholderRef.id, message: "Stakeholder added successfully" }, { status: 201 });
+    return NextResponse.json(stakeholders, { status: 200 });
   } catch (error) {
-    console.error("Error adding stakeholder:", error);
+    console.error("Error fetching stakeholders:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-

@@ -48,3 +48,27 @@ export async function updatePayment(id: string, paymentData: Payment){
 
 
  
+  export async function addPayment(paymentData: Payment) {
+    const response = await fetch("/api/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paymentData),
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to create payment");
+    }
+  
+    return response.json();
+  }
+
+
+  export async function getPaymentsByProject(projectId: string) {
+    const response = await fetch(`/api/projects/${projectId}/payments`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch payments");
+    }
+  
+    return response.json();
+  }
+  

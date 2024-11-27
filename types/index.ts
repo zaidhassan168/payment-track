@@ -28,5 +28,6 @@ export interface Payment {
     paymentTransferred: number;
     deadline?: string; // Optional
     stakeholders?: Stakeholder[]; // Optional
+    projectId: string; // Optional
   }
   
