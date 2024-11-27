@@ -42,9 +42,9 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { name, budget, client } = formData;
+    const { name, budget, client, deadline } = formData;
 
-    if (!name || !budget || !client) {
+    if (!name || !budget || !client || !deadline) {
       alert("All fields are required!");
       return;
     }
@@ -52,12 +52,15 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
     setLoading(true);
 
     try {
-      const projectData: Project = {
-        ...formData,
+      const projectData: Project & { stakeholders: Stakeholder[] } = {
+        projectId: project?.projectId || '', // Add projectId field
+        name,
         budget: Number(budget),
-        spent: project?.spent || 0, // Default for new projects
+        client,
+        deadline,
+        spent: project?.spent || 0,
         paymentTransferred: project?.paymentTransferred || 0,
-        stakeholders,
+        stakeholders: stakeholders || [],
       };
 
       if (project?.id) {
@@ -77,7 +80,6 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
       setLoading(false);
     }
   };
-
   if (!isOpen) return null;
 
   return (

@@ -33,7 +33,7 @@ export default function PaymentForm({ onPaymentAddedAction }: { onPaymentAddedAc
         projectId: formData.projectId,
         stakeholder: formData.stakeholder,
         amount: Number(formData.amount),
-        screenshotUrl: "https://example.com/screenshot.jpg", // Replace with file upload logic later
+        screenshotUrl: formData.screenshotUrl || "",
         timestamp: new Date().toISOString(),
       };
 

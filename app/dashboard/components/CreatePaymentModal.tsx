@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { addPayment } from "@/app/services/payments";
 import { getStakeholdersByProject } from "@/app/services/stakeholders";
-
+import { uploadImage } from "@/app/services/imageUpload";
 export default function CreatePaymentModal({
   isOpen,
   projectId,
@@ -48,22 +48,28 @@ export default function CreatePaymentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!formData.stakeholder || !formData.amount || !file) {
       alert("All fields are required!");
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
+      // Upload the screenshot to Firebase Storage
+      const screenshotUrl = await uploadImage(file, "screenshots");
+
+  
+      // Add the payment with the uploaded screenshot URL
       await addPayment({
         projectId,
         stakeholder: formData.stakeholder,
         amount: Number(formData.amount),
-        screenshotUrl: URL.createObjectURL(file), // Replace with actual upload logic
+        screenshotUrl,
         timestamp: new Date().toISOString(),
       });
+  
       onSuccess();
     } catch (error) {
       console.error("Error creating payment:", error);

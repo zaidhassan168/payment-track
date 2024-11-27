@@ -19,7 +19,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
   useEffect(() => {
     // Unwrap params.id and set it in state
     const unwrapParams = async () => {
-      const unwrappedParams = await params;
+      const unwrappedParams =  params;
       setProjectId(unwrappedParams.id);
     };
 
@@ -28,7 +28,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
   const fetchPayments = async () => {
     try {
       setLoading(true);
-        const pid = await params.id;
+        const pid = params.id;
       const data = await getPaymentsByProject(pid);
       setPayments(data);
     } catch (error) {
