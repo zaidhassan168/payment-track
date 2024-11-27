@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
-export async function GET(req: Request, context: { params: { id: string } }) {
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const { id: projectId } = context.params;
+    const { id: projectId } = await context.params;
 
     const stakeholdersRef = collection(db, `projects/${projectId}/stakeholders`);
     const stakeholdersSnapshot = await getDocs(stakeholdersRef);

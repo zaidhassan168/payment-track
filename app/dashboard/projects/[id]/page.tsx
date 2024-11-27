@@ -6,7 +6,7 @@ import { addPayment } from "@/app/services/payments";
 import { Payment } from "@/types";
 import CreatePaymentModal from "../../components/CreatePaymentModal";
 
-export default function ProjectDetailsPage({ params }: { params: { id: string } }) {
+export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
   useEffect(() => {
     // Unwrap params.id and set it in state
     const unwrapParams = async () => {
-      const unwrappedParams =  params;
+      const unwrappedParams =  await params;
       setProjectId(unwrappedParams.id);
     };
 
@@ -28,8 +28,8 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
   const fetchPayments = async () => {
     try {
       setLoading(true);
-        const pid = params.id;
-      const data = await getPaymentsByProject(pid);
+        const pid = await params
+      const data = await getPaymentsByProject(pid.id);
       setPayments(data);
     } catch (error) {
       console.error("Error fetching payments:", error);
