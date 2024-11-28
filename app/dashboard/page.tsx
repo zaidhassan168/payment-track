@@ -70,7 +70,7 @@ export default function DashboardPage() {
                   Total Transferred Today
                 </h2>
                 <p className="text-2xl text-green-500 font-semibold">
-                  ${metrics.totalToday}
+                  Rs {metrics.totalToday}
                 </p>
               </div>
 
@@ -80,7 +80,7 @@ export default function DashboardPage() {
                   Total Transferred This Month
                 </h2>
                 <p className="text-2xl text-green-500 font-semibold">
-                  ${metrics.totalMonth}
+                  Rs {metrics.totalMonth}
                 </p>
               </div>
 

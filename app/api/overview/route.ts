@@ -1,52 +1,31 @@
 import { NextResponse } from "next/server";
 import { db } from "@/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-
-// Helper function to calculate the start of the day
-const startOfDay = () => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return now;
-};
-
-// Helper function to calculate the start of the month
-const startOfMonth = () => {
-  const now = new Date();
-  now.setDate(1);
-  now.setHours(0, 0, 0, 0);
-  return now;
-};
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 
 export async function GET() {
   try {
-    // Query Payments Collection
-    const paymentsRef = collection(db, "payments");
-    const today = startOfDay();
-    const monthStart = startOfMonth();
+    // Fetch today's overview
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+    const todayRef = doc(db, "overview", today);
+    const todayDoc = await getDoc(todayRef);
 
-    const todayQuery = query(paymentsRef, where("timestamp", ">=", today));
-    const monthQuery = query(paymentsRef, where("timestamp", ">=", monthStart));
-    const projectsRef = collection(db, "projects");
+    const totalToday = todayDoc.exists()
+      ? todayDoc.data().totalTransferredToday
+      : 0;
 
-    // Fetch Today's Payments
-    const todaySnapshot = await getDocs(todayQuery);
-    const totalToday = todaySnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
-      0
-    );
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+    const monthRef = doc(db, "overview", `month-${currentMonth}`);
+    const monthDoc = await getDoc(monthRef);
 
-    // Fetch This Month's Payments
-    const monthSnapshot = await getDocs(monthQuery);
-    const totalMonth = monthSnapshot.docs.reduce(
-      (sum, doc) => sum + (doc.data().amount || 0),
-      0
-    );
+    const totalMonth = monthDoc.exists()
+      ? monthDoc.data().totalTransferredThisMonth
+      : 0;
 
-    // Fetch All Projects
-    const projectsSnapshot = await getDocs(projectsRef);
+    // Fetch all projects
+    const projectsSnapshot = await getDocs(collection(db, "projects"));
     const projects = projectsSnapshot.docs.map((doc) => ({
       id: doc.id,
-      name: doc.data().name,
+      ...doc.data(),
     }));
 
     return NextResponse.json({
@@ -56,9 +35,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching overview metrics:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

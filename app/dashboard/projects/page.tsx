@@ -82,13 +82,13 @@ export default function ProjectsPage() {
                   Client: {project.client}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Budget: ${project.budget}
+                  Budget: Rs {project.budget}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Spent: ${project.spent}
+                  Spent: Rs {project.spent}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Payment Transferred: ${project.paymentTransferred}
+                  Payment Transferred: Rs {project.paymentTransferred}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Deadline: {project.deadline || "Not set"}

@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { db } from "@/firebase";
-import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+  increment,
+} from "firebase/firestore";
 import { Payment } from "@/types";
 
 export async function POST(req: Request) {
@@ -11,6 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Create a new payment entry
     const paymentRef = await addDoc(collection(db, "payments"), {
       projectId: data.projectId,
       stakeholder: data.stakeholder,
@@ -19,6 +28,7 @@ export async function POST(req: Request) {
       timestamp: data.timestamp || new Date().toISOString(),
     });
 
+    // Update the project's spent amount
     const projectRef = doc(db, "projects", data.projectId);
     const projectSnapshot = await getDoc(projectRef);
 
@@ -31,25 +41,51 @@ export async function POST(req: Request) {
       spent: currentSpent + data.amount,
     });
 
-    return NextResponse.json({ id: paymentRef.id, message: "Payment created and project updated successfully" }, { status: 201 });
+    // Update the overview collection
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+    const overviewRef = doc(db, "overview", today);
+    const overviewSnapshot = await getDoc(overviewRef);
+
+    if (overviewSnapshot.exists()) {
+      // If today's entry exists, increment the amount
+      await updateDoc(overviewRef, {
+        totalTransferredToday: increment(data.amount),
+        totalPaymentsToday: increment(1),
+      });
+    } else {
+      // If today's entry does not exist, create a new document
+      await setDoc(overviewRef, {
+        date: today,
+        totalTransferredToday: data.amount,
+        totalPaymentsToday: 1,
+        totalTransferredThisMonth: data.amount, // Start with today's amount for the month
+      });
+    }
+
+    // Update monthly total
+    const currentMonth = today.slice(0, 7); // YYYY-MM format
+    const monthlyRef = doc(db, "overview", `month-${currentMonth}`);
+    const monthlySnapshot = await getDoc(monthlyRef);
+
+    if (monthlySnapshot.exists()) {
+      await updateDoc(monthlyRef, {
+        totalTransferredThisMonth: increment(data.amount),
+        totalPaymentsThisMonth: increment(1),
+      });
+    } else {
+      await setDoc(monthlyRef, {
+        month: currentMonth,
+        totalTransferredThisMonth: data.amount,
+        totalPaymentsThisMonth: 1,
+      });
+    }
+
+    return NextResponse.json({
+      id: paymentRef.id,
+      message: "Payment created, project updated, and overview updated successfully",
+    }, { status: 201 });
   } catch (error) {
     console.error("Error creating payment:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
-// // GET: Retrieve all payments
-// export async function GET() {
-//   try {
-//     const snapshot = await getDocs(collection(db, "payments"));
-//     const payments = snapshot.docs.map((doc) => ({
-//       id: doc.id,
-//       ...doc.data(),
-//     }));
-
-//     return NextResponse.json(payments, { status: 200 });
-//   } catch (error) {
-//     console.error("Error fetching payments:", error);
-//     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-//   }
-// }
