@@ -82,13 +82,13 @@ export default function ProjectsPage() {
                   Client: {project.client}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Budget: Rs {project.budget}
+                  Budget: PKR {new Intl.NumberFormat('en-PK').format(project.budget)}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Spent: Rs {project.spent}
+                  Spent: PKR {new Intl.NumberFormat('en-PK').format(project.spent)}
                 </p>
                 <p className="text-sm text-muted-foreground mb-1">
-                  Payment Transferred: Rs {project.paymentTransferred}
+                  Payment Transferred: PKR {new Intl.NumberFormat('en-PK').format(project.paymentTransferred)}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Deadline: {project.deadline || "Not set"}
