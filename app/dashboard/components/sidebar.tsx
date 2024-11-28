@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   LayoutDashboard,
   CreditCard,
@@ -98,28 +99,30 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               }}
             />
           </div>
-          <nav className="flex-1 space-y-1 px-3 py-2">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Button
-                  key={item.name}
-                  asChild
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start",
-                    isActive && "bg-secondary",
-                    isCollapsed && "px-2"
-                  )}
-                >
-                  <Link href={item.href}>
-                    <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-                    {!isCollapsed && <span>{item.name}</span>}
-                  </Link>
-                </Button>
-              );
-            })}
-          </nav>
+          <ScrollArea className="flex-1">
+            <nav className="space-y-1 px-3 py-2">
+              {navigation.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Button
+                    key={item.name}
+                    asChild
+                    variant={isActive ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start",
+                      isActive && "bg-secondary",
+                      isCollapsed && "px-2"
+                    )}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                      {!isCollapsed && <span>{item.name}</span>}
+                    </Link>
+                  </Button>
+                );
+              })}
+            </nav>
+          </ScrollArea>
         </div>
       </aside>
     </>
