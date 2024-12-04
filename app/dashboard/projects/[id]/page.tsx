@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Edit, Plus, DollarSign, Calendar, User, Eye, Download } from "lucide-react";
+import { ArrowLeft, Edit, Plus, DollarSign, Calendar, User, Eye, Download } from 'lucide-react';
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -67,13 +67,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   };
 
   const exportToCSV = () => {
-    const csvHeader = ["Stakeholder,Amount,Date,Screenshot URL"];
-    const csvRows = payments.map(payment => 
-      `${payment.stakeholder},${payment.amount},"${new Date(payment.timestamp).toLocaleString()}","${payment.screenshotUrl}"`
+    const csvHeader = ["Date,Description,Head,Item,Category,Amount,Sent To,From,Screenshot URL"];
+    const csvRows = payments.map(payment =>
+      `"${payment.date}","${payment.description}","${payment.stakeholder}","${payment.item}","${payment.category}",${payment.amount},"${payment.sentTo}","${payment.from}","${payment.screenshotUrl ?? ''}"`
     );
     const csvContent = `${csvHeader.join("\n")}\n${csvRows.join("\n")}`;
 
-    // Create a blob and trigger download
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -82,6 +81,15 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  const calculateSummary = () => {
+    const totalExpense = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalSent = payments.reduce((sum, payment) => payment.stakeholder === "Client Expense" ? sum + payment.amount : sum, 0);
+    const totalFromClient = payments.reduce((sum, payment) => payment.stakeholder === "Income" ? sum + payment.amount : sum, 0);
+    return { totalExpense, totalSent, totalFromClient };
+  };
+
+  const summary = calculateSummary();
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -125,6 +133,28 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 <div className="flex items-center">
                   <Calendar className="h-6 w-6 text-muted-foreground mr-2" />
                   <p className="text-sm font-medium">Deadline: <span className="text-foreground">{project.deadline || "Not set"}</span></p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-muted-foreground">Total Expense</span>
+                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalExpense)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-muted-foreground">Total Sent</span>
+                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalSent)}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-muted-foreground">Total From Client</span>
+                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalFromClient)}</span>
                 </div>
               </div>
             </CardContent>
@@ -177,18 +207,28 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Stakeholder</TableHead>
-                  <TableHead>Amount</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Head</TableHead>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Sent To</TableHead>
+                  <TableHead>From</TableHead>
                   <TableHead>Screenshot</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
+                    <TableCell>{payment.date}</TableCell>
+                    <TableCell>{payment.description}</TableCell>
                     <TableCell>{payment.stakeholder}</TableCell>
+                    <TableCell>{payment.item}</TableCell>
+                    <TableCell>{payment.category}</TableCell>
                     <TableCell>PKR {new Intl.NumberFormat('en-PK').format(payment.amount)}</TableCell>
-                    <TableCell>{new Date(payment.timestamp).toLocaleString()}</TableCell>
+                    <TableCell>{payment.sentTo}</TableCell>
+                    <TableCell>{payment.from}</TableCell>
                     <TableCell>
                       <Button variant="outline" size="sm" onClick={() => window.open(payment.screenshotUrl, "_blank")}>
                         <Eye className="mr-2 h-4 w-4" />
@@ -218,3 +258,4 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     </div>
   );
 }
+

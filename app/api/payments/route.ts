@@ -15,17 +15,29 @@ export async function POST(req: Request) {
   try {
     const data: Payment = await req.json();
 
-    if (!data.projectId || !data.stakeholder || !data.amount || !data.screenshotUrl) {
+    // Validate required fields
+    if (!data.projectId || !data.amount || !data.category) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+
+    // Add default timestamp if not provided
+    const currentTimestamp = new Date().toISOString();
+    data.timestamp = data.timestamp || currentTimestamp;
+    data.date = data.date || currentTimestamp.split("T")[0]; // Default to today (YYYY-MM-DD)
 
     // Create a new payment entry
     const paymentRef = await addDoc(collection(db, "payments"), {
       projectId: data.projectId,
-      stakeholder: data.stakeholder,
+      date: data.date,
+      description: data.description || "",
+      stakeholder: data.stakeholder || "",
+      item: data.item || "",
+      category: data.category,
       amount: data.amount,
-      screenshotUrl: data.screenshotUrl,
-      timestamp: data.timestamp || new Date().toISOString(),
+      sentTo: data.sentTo || "",
+      from: data.from || "",
+      screenshotUrl: data.screenshotUrl || "",
+      timestamp: data.timestamp,
     });
 
     // Update the project's spent amount
@@ -42,7 +54,7 @@ export async function POST(req: Request) {
     });
 
     // Update the overview collection
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+    const today = data.date;
     const overviewRef = doc(db, "overview", today);
     const overviewSnapshot = await getDoc(overviewRef);
 

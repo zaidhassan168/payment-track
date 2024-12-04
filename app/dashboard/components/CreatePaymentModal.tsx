@@ -1,76 +1,83 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { addPayment } from "@/app/services/payments";
-import { getStakeholdersByProject } from "@/app/services/stakeholders";
-import { uploadImage } from "@/app/services/imageUpload";
+import { useState } from "react"
+import { addPayment } from "@/app/services/payments"
+import { uploadImage } from "@/app/services/imageUpload"
+import { Payment } from "@/types"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
+import { CalendarIcon, Loader2 } from 'lucide-react'
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
+type CreatePaymentModalProps = {
+  isOpen: boolean;
+  projectId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+};
+
 export default function CreatePaymentModal({
   isOpen,
   projectId,
   onClose,
   onSuccess,
-}: {
-  isOpen: boolean;
-  projectId: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}) {
-  const [formData, setFormData] = useState({
+}: CreatePaymentModalProps) {
+  const [formData, setFormData] = useState<Partial<Payment>>({
+    projectId,
+    date: new Date().toISOString().split("T")[0],
+    description: "",
     stakeholder: "",
-    amount: "",
-    screenshotUrl: "",
+    item: "",
+    category: "",
+    amount: 0,
+    sentTo: "",
+    from: "",
   });
   const [file, setFile] = useState<File | null>(null);
-  const [stakeholders, setStakeholders] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [stakeholdersLoading, setStakeholdersLoading] = useState(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadStakeholders();
-    }
-  }, [isOpen]);
-
-  const loadStakeholders = async () => {
-    try {
-      const data = await getStakeholdersByProject(projectId);
-      setStakeholders(data);
-    } catch (error) {
-      console.error("Error loading stakeholders:", error);
-    } finally {
-      setStakeholdersLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (
+    name: string,
+    value: string | number | Date
+  ) => {
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    if (!formData.stakeholder || !formData.amount || !file) {
-      alert("All fields are required!");
+
+    if (!formData.category || !formData.amount) {
+      alert("Category and Amount are required!");
       return;
     }
-  
-    setLoading(true);
-  
-    try {
-      // Upload the screenshot to Firebase Storage
-      const screenshotUrl = await uploadImage(file, "screenshots");
 
-  
-      // Add the payment with the uploaded screenshot URL
-      await addPayment({
+    setLoading(true);
+
+    try {
+      let screenshotUrl = formData.screenshotUrl;
+      if (file) {
+        screenshotUrl = await uploadImage(file, "screenshots");
+      }
+
+      const paymentData: Payment = {
+        ...formData,
         projectId,
-        stakeholder: formData.stakeholder,
         amount: Number(formData.amount),
         screenshotUrl,
         timestamp: new Date().toISOString(),
-      });
-  
+        category: formData.category || "",
+      };
+
+      await addPayment(paymentData);
       onSuccess();
+      onClose();
     } catch (error) {
       console.error("Error creating payment:", error);
       alert("Failed to create payment.");
@@ -79,72 +86,150 @@ export default function CreatePaymentModal({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-4">Create Payment</h2>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create Payment</DialogTitle>
+          <DialogDescription>
+            Add a new payment to your project. Fill in the details below.
+          </DialogDescription>
+        </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium">Stakeholder</label>
-            {stakeholdersLoading ? (
-              <p>Loading stakeholders...</p>
-            ) : (
-              <select
-              title="Stakeholder"
-                name="stakeholder"
-                className="w-full border rounded p-2"
-                value={formData.stakeholder}
-                onChange={handleChange}
-              >
-                <option value="">Select a stakeholder</option>
-                {stakeholders.map((stakeholder: any) => (
-                  <option key={stakeholder.id} value={stakeholder.name}>
-                    {stakeholder.name} ({stakeholder.role})
-                  </option>
-                ))}
-              </select>
-            )}
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="date" className="text-right">
+                Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[280px] justify-start text-left font-normal",
+                      !formData.date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.date ? format(new Date(formData.date), "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={new Date(formData.date || "")}
+                    onSelect={(date) => handleChange("date", date?.toISOString().split("T")[0] || "")}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                className="col-span-3"
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="head" className="text-right">
+                Head
+              </Label>
+              <Select onValueChange={(value) => handleChange("head", value)} value={formData.stakeholder}>
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Select a head" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Income">Income</SelectItem>
+                  <SelectItem value="Client Expense">Client Expense</SelectItem>
+                  <SelectItem value="Project Expense">Project Expense</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="item" className="text-right">
+                Item
+              </Label>
+              <Input
+                id="item"
+                className="col-span-3"
+                value={formData.item}
+                onChange={(e) => handleChange("item", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Select onValueChange={(value) => handleChange("category", value)} value={formData.category}>
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Deduction">Deduction</SelectItem>
+                  <SelectItem value="Extra Expense">Extra Expense</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                className="col-span-3"
+                value={formData.amount}
+                onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="sentTo" className="text-right">
+                Sent To
+              </Label>
+              <Input
+                id="sentTo"
+                className="col-span-3"
+                value={formData.sentTo}
+                onChange={(e) => handleChange("sentTo", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="from" className="text-right">
+                From
+              </Label>
+              <Input
+                id="from"
+                className="col-span-3"
+                value={formData.from}
+                onChange={(e) => handleChange("from", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="screenshot" className="text-right">
+                Screenshot
+              </Label>
+              <Input
+                id="screenshot"
+                type="file"
+                className="col-span-3"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+            </div>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium">Amount</label>
-            <input
-            title="Amount"
-              type="number"
-              name="amount"
-              className="w-full border rounded p-2"
-              value={formData.amount}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium">Screenshot</label>
-            <input
-            title="Screenshot"
-              type="file"
-              className="w-full border rounded p-2"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-              disabled={loading}
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? "Submitting..." : "Submit"}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
-  );
+      </DialogContent>
+    </Dialog>
+  )
 }
+

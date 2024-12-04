@@ -1,14 +1,22 @@
 // src/types/index.ts
 
 // Payment Type
-export interface Payment {
-    id?: string; // Optional for Firestore documents
+
+  export interface Payment {
+    id?: string;
     projectId: string;
-    stakeholder: string;
+    date?: string; // ISO string for the date
+    description?: string;
+    stakeholder?: string; // e.g., Income, Client Expense, Project Expense
+    item?: string; // Optional, e.g., Cement, Fuel
+    category: string; // e.g., Deduction, Extra Expense
     amount: number;
-    screenshotUrl: string;
-    timestamp: string;
+    sentTo?: string; // Person or entity name
+    from?: string; // Person or entity name
+    screenshotUrl?: string; // Optional for receipts/screenshots
+    timestamp?: string; // Auto-added if not specified
   }
+  
   
   // Stakeholder Type
   export interface Stakeholder {
