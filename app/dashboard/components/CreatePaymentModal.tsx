@@ -1,20 +1,22 @@
-'use client'
+"use client"
 
-import { useState } from "react"
-import { addPayment } from "@/app/services/payments"
-import { uploadImage } from "@/app/services/imageUpload"
-import { Payment } from "@/types"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
-import { CalendarIcon, Loader2 } from 'lucide-react'
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useState, useEffect } from "react";
+import { addPayment } from "@/app/services/payments";
+import { uploadImage } from "@/app/services/imageUpload";
+import { Payment, Stakeholder } from "@/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, Loader2 } from 'lucide-react';
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase";
 
 type CreatePaymentModalProps = {
   isOpen: boolean;
@@ -33,7 +35,7 @@ export default function CreatePaymentModal({
     projectId,
     date: new Date().toISOString().split("T")[0],
     description: "",
-    stakeholder: "",
+    stakeholder: "", // Will store the stakeholder ID or name
     item: "",
     category: undefined,
     amount: 0,
@@ -42,12 +44,34 @@ export default function CreatePaymentModal({
   });
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]); // Store fetched stakeholders
+
+  useEffect(() => {
+    // Fetch stakeholders when modal opens and projectId is available
+    const fetchStakeholders = async () => {
+      if (!projectId || !isOpen) return;
+
+      try {
+        const stakeholdersRef = collection(db, `projects/${projectId}/stakeholders`);
+        const snapshot = await getDocs(stakeholdersRef);
+        const stakeholderList: Stakeholder[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Stakeholder[];
+        setStakeholders(stakeholderList);
+      } catch (error) {
+        console.error("Error fetching stakeholders:", error);
+      }
+    };
+
+    fetchStakeholders();
+  }, [projectId, isOpen]);
 
   const handleChange = (
     name: string,
     value: string | number | Date
   ) => {
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,6 +99,9 @@ export default function CreatePaymentModal({
         category: formData.category || "",
       };
 
+      // paymentData.stakeholder should now hold the stakeholder's id or name
+      // that can be used server-side to send WhatsApp messages.
+      
       await addPayment(paymentData);
       onSuccess();
       onClose();
@@ -97,6 +124,7 @@ export default function CreatePaymentModal({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {/* Date Picker */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="date" className="text-right">
                 Date
@@ -124,6 +152,8 @@ export default function CreatePaymentModal({
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Description */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
                 Description
@@ -131,26 +161,35 @@ export default function CreatePaymentModal({
               <Textarea
                 id="description"
                 className="col-span-3"
-                value={formData.description}
+                value={formData.description || ""}
                 onChange={(e) => handleChange("description", e.target.value)}
               />
             </div>
+
+            {/* Stakeholder (Head) - now dynamic from stakeholders subcollection */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="head" className="text-right">
-                Head
+                Stakeholder
               </Label>
-              <Select onValueChange={(value) => handleChange("stakeholder", value)} value={formData.stakeholder}>
+              <Select 
+                onValueChange={(value) => handleChange("stakeholder", value)} 
+                value={formData.stakeholder || ""}
+              >
                 <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Select a head" />
+                  <SelectValue placeholder="Select a stakeholder" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Client">Client</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-
+                  {stakeholders.length === 0 && (
+                    <SelectItem value="not found">No stakeholders found</SelectItem>
+                  )}
+                  {stakeholders.map((st) => (
+                    <SelectItem key={st.id} value={st.id || 'null'}>{st.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Item */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="item" className="text-right">
                 Item
@@ -158,25 +197,36 @@ export default function CreatePaymentModal({
               <Input
                 id="item"
                 className="col-span-3"
-                value={formData.item}
+                value={formData.item || ""}
                 onChange={(e) => handleChange("item", e.target.value)}
               />
             </div>
+
+            {/* Category */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="category" className="text-right">
                 Category
               </Label>
-              <Select onValueChange={(value) => handleChange("category", value)} value={formData.category}>
+              <Select 
+                onValueChange={(value) => handleChange("category", value)} 
+                value={formData.category || ""}
+              >
                 <SelectTrigger className="w-[280px]">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                <SelectItem value="income">Income</SelectItem>
+
+
+                  <SelectItem value="income">Income</SelectItem>
                   <SelectItem value="deduction">Deduction</SelectItem>
                   <SelectItem value="extraExpense">Extra Expense</SelectItem>
+                  <SelectItem value="clientExpense">Client Expense</SelectItem>
+                  <SelectItem value="projectExpense">Project Expense</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Amount */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="amount" className="text-right">
                 Amount
@@ -185,10 +235,12 @@ export default function CreatePaymentModal({
                 id="amount"
                 type="number"
                 className="col-span-3"
-                value={formData.amount}
+                value={formData.amount || 0}
                 onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
               />
             </div>
+
+            {/* Sent To */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="sentTo" className="text-right">
                 Sent To
@@ -196,10 +248,12 @@ export default function CreatePaymentModal({
               <Input
                 id="sentTo"
                 className="col-span-3"
-                value={formData.sentTo}
+                value={formData.sentTo || ""}
                 onChange={(e) => handleChange("sentTo", e.target.value)}
               />
             </div>
+
+            {/* From */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="from" className="text-right">
                 From
@@ -207,10 +261,12 @@ export default function CreatePaymentModal({
               <Input
                 id="from"
                 className="col-span-3"
-                value={formData.from}
+                value={formData.from || ""}
                 onChange={(e) => handleChange("from", e.target.value)}
               />
             </div>
+
+            {/* Screenshot */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="screenshot" className="text-right">
                 Screenshot
@@ -232,6 +288,5 @@ export default function CreatePaymentModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

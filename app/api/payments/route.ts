@@ -11,6 +11,13 @@ import {
 } from "firebase/firestore";
 import { Payment } from "@/types";
 import { paymentSchema } from "@/lib/schemas/payment";
+import twilio from "twilio";
+import { console } from "inspector";
+const client = twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
+);
+
 export async function POST(req: Request) {
   try {
     const json: Payment = await req.json();
@@ -21,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     // Normalize category input if needed (e.g., lowercase)
-    const category = data.category.toLowerCase() as 
+    const category = data.category.toLowerCase() as
       | "income"
       | "clientexpense"
       | "projectexpense"
@@ -86,7 +93,7 @@ export async function POST(req: Request) {
       // category: "projectexpense" -> totalExpenses.projectExpense
       // category: "deduction" -> totalExpenses.deduction
       // category: "extraexpense" -> totalExpenses.extraExpense
-      
+
       if (category === "clientexpense") {
         currentSummary.totalExpenses.clientExpense += data.amount;
       } else if (category === "projectexpense") {
@@ -151,7 +158,39 @@ export async function POST(req: Request) {
         totalPaymentsThisMonth: 1,
       });
     }
+    const stakeholdersRef = collection(db, `projects/${data.projectId}/stakeholders`);
+    // Ideally, you have a way to find the exact stakeholder document. Let's assume we have the name in `data.stakeholder`
+    // and we find the first stakeholder with that name:
+    if (data.stakeholder) {
+      const stakeholdersSnapshot = await getDoc(doc(stakeholdersRef, data.stakeholder));
+      if (stakeholdersSnapshot.exists()) {
+        const stakeholderData = stakeholdersSnapshot.data();
+        const contactNumber = stakeholderData.contact; // e.g., "+1234567890"
 
+        // Send WhatsApp message via Twilio
+        // Make sure your Twilio WhatsApp number is pre-approved and in the correct format:
+        if (contactNumber) {
+          console.log("Sending WhatsApp message to:", contactNumber);
+          console.log("from:", process.env.TWILIO_WHATSAPP_FROM_NUMBER);
+
+          const messageBody = `A new payment of amount PKR ${data.amount} was recorded for project: ${projectData.name}.
+
+Description: ${data.description || "N/A"}
+Category: ${data.category}
+Date: ${data.date}
+
+${data.screenshotUrl ? "Screenshot attached below:" : "No screenshot attached"}`;
+
+          await client.messages.create({
+            from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM_NUMBER}`,
+            to: `whatsapp:${contactNumber}`,
+            body: messageBody,
+            mediaUrl: data.screenshotUrl ? [data.screenshotUrl] : undefined,
+          });
+          
+        }
+      }
+    }
     return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
 
   } catch (error) {
