@@ -82,13 +82,6 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               )}
             </Button>
           </div>
-          {!isCollapsed && (
-            <div className="flex items-center gap-4 px-6 py-2">
-              <ClerkLogo />
-              <div aria-hidden className="h-6 w-px bg-border" />
-              <NextLogo />
-            </div>
-          )}
           <div className="px-3 py-2">
             <UserButton
               afterSignOutUrl="/"

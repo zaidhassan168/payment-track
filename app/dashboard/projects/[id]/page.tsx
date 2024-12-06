@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getPaymentsByProject } from "@/app/services/payments";
-import { getProjectById, updateProject } from "@/app/services/projects";
+import { getProjectById } from "@/app/services/projects";
 import { Payment, Project } from "@/types";
 import CreatePaymentModal from "../../components/CreatePaymentModal";
 import ProjectModal from "../../components/ProjectModal";
@@ -55,6 +55,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const handlePaymentAdded = () => {
     if (projectId) {
       fetchPayments(projectId);
+      fetchProjectDetails(projectId);
     }
     setIsPaymentModalOpen(false);
   };
@@ -82,14 +83,30 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     window.URL.revokeObjectURL(url);
   };
 
-  const calculateSummary = () => {
-    const totalExpense = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    const totalSent = payments.reduce((sum, payment) => payment.stakeholder === "Client Expense" ? sum + payment.amount : sum, 0);
-    const totalFromClient = payments.reduce((sum, payment) => payment.stakeholder === "Income" ? sum + payment.amount : sum, 0);
-    return { totalExpense, totalSent, totalFromClient };
+  // Compute total expenses and other summary fields from project.paymentSummary
+  const getSummaryData = () => {
+    if (!project || !project.paymentSummary) {
+      return {
+        totalIncome: 0,
+        totalExpenses: 0,
+        balance: 0
+      };
+    }
+
+    const { paymentSummary } = project;
+    const totalExpenses = paymentSummary.totalExpenses.clientExpense +
+      paymentSummary.totalExpenses.projectExpense +
+      paymentSummary.totalExpenses.deduction +
+      paymentSummary.totalExpenses.extraExpense;
+
+    return {
+      totalIncome: paymentSummary.totalIncome,
+      totalExpenses,
+      balance: paymentSummary.balance,
+    };
   };
 
-  const summary = calculateSummary();
+  const summary = getSummaryData();
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -138,27 +155,86 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             </CardContent>
           </Card>
 
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-muted-foreground">Total Expense</span>
-                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalExpense)}</span>
+          {/* Updated summary card to reflect new paymentSummary fields */}
+          {project && project.paymentSummary ? (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Main summary: Total Income, Total Expenses, and Balance */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-muted-foreground">Total Income</span>
+                    <span className="text-2xl font-bold">
+                      PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.totalIncome)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-muted-foreground">Total Expenses</span>
+                    {/* Calculate total expenses from all categories */}
+                    <span className="text-2xl font-bold">
+                      PKR {new Intl.NumberFormat('en-PK').format(
+                        project.paymentSummary.totalExpenses.clientExpense +
+                        project.paymentSummary.totalExpenses.projectExpense +
+                        project.paymentSummary.totalExpenses.deduction +
+                        project.paymentSummary.totalExpenses.extraExpense
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-muted-foreground">Balance</span>
+                    <span className="text-2xl font-bold">
+                      PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.balance)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-muted-foreground">Total Sent</span>
-                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalSent)}</span>
+
+                {/* Detailed Expenses Breakdown */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Expenses Breakdown</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">Client Expense</span>
+                      <span className="text-lg font-bold">
+                        PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.totalExpenses.clientExpense)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">Project Expense</span>
+                      <span className="text-lg font-bold">
+                        PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.totalExpenses.projectExpense)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">Deduction</span>
+                      <span className="text-lg font-bold">
+                        PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.totalExpenses.deduction)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">Extra Expense</span>
+                      <span className="text-lg font-bold">
+                        PKR {new Intl.NumberFormat('en-PK').format(project.paymentSummary.totalExpenses.extraExpense)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-muted-foreground">Total From Client</span>
-                  <span className="text-2xl font-bold">PKR {new Intl.NumberFormat('en-PK').format(summary.totalFromClient)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            // If project or paymentSummary is not available, show skeleton or fallback
+            <Card className="mb-8">
+              <CardHeader>
+                <Skeleton className="h-8 w-[250px]" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-6 w-full mb-2" />
+                <Skeleton className="h-6 w-full mb-2" />
+                <Skeleton className="h-6 w-full mb-2" />
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       ) : (
         <Card className="mb-8">
@@ -258,4 +334,3 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     </div>
   );
 }
-

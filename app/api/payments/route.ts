@@ -10,47 +10,107 @@ import {
   increment,
 } from "firebase/firestore";
 import { Payment } from "@/types";
-
+import { paymentSchema } from "@/lib/schemas/payment";
 export async function POST(req: Request) {
   try {
-    const data: Payment = await req.json();
-
+    const json: Payment = await req.json();
+    const data = paymentSchema.parse(json); // Validate here
     // Validate required fields
     if (!data.projectId || !data.amount || !data.category) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Normalize category input if needed (e.g., lowercase)
+    const category = data.category.toLowerCase() as 
+      | "income"
+      | "clientexpense"
+      | "projectexpense"
+      | "deduction"
+      | "extraexpense";
+
+    // Validate that category is one of the allowed categories
+    const allowedCategories = ["income", "clientexpense", "projectexpense", "deduction", "extraexpense"] as const;
+    if (!allowedCategories.includes(category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
     // Add default timestamp if not provided
     const currentTimestamp = new Date().toISOString();
     data.timestamp = data.timestamp || currentTimestamp;
-    data.date = data.date || currentTimestamp.split("T")[0]; // Default to today (YYYY-MM-DD)
-
+    data.date = data.date || currentTimestamp.split("T")[0];
     // Create a new payment entry
-    const paymentRef = await addDoc(collection(db, "payments"), {
-      projectId: data.projectId,
-      date: data.date,
-      description: data.description || "",
-      stakeholder: data.stakeholder || "",
-      item: data.item || "",
-      category: data.category,
-      amount: data.amount,
-      sentTo: data.sentTo || "",
-      from: data.from || "",
-      screenshotUrl: data.screenshotUrl || "",
-      timestamp: data.timestamp,
-    });
+    // const paymentRef = await addDoc(collection(db, "payments"), {
+    //   projectId: data.projectId,
+    //   date: data.date,
+    //   description: data.description || "",
+    //   stakeholder: data.stakeholder || "",
+    //   item: data.item || "",
+    //   category: category,
+    //   amount: data.amount,
+    //   sentTo: data.sentTo || "",
+    //   from: data.from || "",
+    //   screenshotUrl: data.screenshotUrl || "",
+    //   timestamp: data.timestamp,
+    // });
+    const paymentRef = await addDoc(collection(db, "payments"), data);
 
-    // Update the project's spent amount
+    // Fetch the project
     const projectRef = doc(db, "projects", data.projectId);
     const projectSnapshot = await getDoc(projectRef);
 
     if (!projectSnapshot.exists()) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+    const projectData = projectSnapshot.data();
+    const currentSpent = projectData.spent || 0;
+    const updatedSpent = currentSpent + data.amount;
 
-    const currentSpent = projectSnapshot.data().spent || 0;
+    // Initialize paymentSummary if not present
+    const currentSummary = projectData.paymentSummary || {
+      totalIncome: 0,
+      totalExpenses: {
+        clientExpense: 0,
+        projectExpense: 0,
+        deduction: 0,
+        extraExpense: 0,
+      },
+      balance: 0,
+    };
+
+    // Update summary based on the payment category
+    if (category === "income") {
+      currentSummary.totalIncome += data.amount;
+    } else {
+      // Map to the correct key in totalExpenses:
+      // category: "clientexpense" -> totalExpenses.clientExpense
+      // category: "projectexpense" -> totalExpenses.projectExpense
+      // category: "deduction" -> totalExpenses.deduction
+      // category: "extraexpense" -> totalExpenses.extraExpense
+      
+      if (category === "clientexpense") {
+        currentSummary.totalExpenses.clientExpense += data.amount;
+      } else if (category === "projectexpense") {
+        currentSummary.totalExpenses.projectExpense += data.amount;
+      } else if (category === "deduction") {
+        currentSummary.totalExpenses.deduction += data.amount;
+      } else if (category === "extraexpense") {
+        currentSummary.totalExpenses.extraExpense += data.amount;
+      }
+    }
+
+    // Recalculate the balance:
+    const totalExpensesSum =
+      currentSummary.totalExpenses.clientExpense +
+      currentSummary.totalExpenses.projectExpense +
+      currentSummary.totalExpenses.deduction +
+      currentSummary.totalExpenses.extraExpense;
+
+    currentSummary.balance = currentSummary.totalIncome - totalExpensesSum;
+
+    // Update the project document
     await updateDoc(projectRef, {
-      spent: currentSpent + data.amount,
+      spent: updatedSpent,
+      paymentSummary: currentSummary, // Save the updated summary
     });
 
     // Update the overview collection
@@ -92,12 +152,14 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({
-      id: paymentRef.id,
-      message: "Payment created, project updated, and overview updated successfully",
-    }, { status: 201 });
+    return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
+
   } catch (error) {
     console.error("Error creating payment:", error);
+    if (error instanceof Error && "issues" in error) {
+      // ZodError
+      return NextResponse.json({ error: (error as any).issues }, { status: 400 });
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

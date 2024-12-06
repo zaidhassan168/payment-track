@@ -35,7 +35,7 @@ export default function CreatePaymentModal({
     description: "",
     stakeholder: "",
     item: "",
-    category: "",
+    category: undefined,
     amount: 0,
     sentTo: "",
     from: "",
@@ -139,14 +139,15 @@ export default function CreatePaymentModal({
               <Label htmlFor="head" className="text-right">
                 Head
               </Label>
-              <Select onValueChange={(value) => handleChange("head", value)} value={formData.stakeholder}>
+              <Select onValueChange={(value) => handleChange("stakeholder", value)} value={formData.stakeholder}>
                 <SelectTrigger className="w-[280px]">
                   <SelectValue placeholder="Select a head" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Income">Income</SelectItem>
-                  <SelectItem value="Client Expense">Client Expense</SelectItem>
-                  <SelectItem value="Project Expense">Project Expense</SelectItem>
+                  <SelectItem value="Client">Client</SelectItem>
+                  <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
@@ -170,8 +171,9 @@ export default function CreatePaymentModal({
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Deduction">Deduction</SelectItem>
-                  <SelectItem value="Extra Expense">Extra Expense</SelectItem>
+                <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="deduction">Deduction</SelectItem>
+                  <SelectItem value="extraExpense">Extra Expense</SelectItem>
                 </SelectContent>
               </Select>
             </div>

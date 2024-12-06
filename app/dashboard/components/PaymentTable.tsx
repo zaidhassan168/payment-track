@@ -45,7 +45,7 @@ export default function PaymentTable() {
                 <td className="border border-gray-300 p-2">{payment.projectId}</td>
                 <td className="border border-gray-300 p-2">{payment.stakeholder}</td>
                 <td className="border border-gray-300 p-2">{payment.amount}</td>
-                <td className="border border-gray-300 p-2">{new Date(payment.timestamp).toLocaleString()}</td>
+                <td className="border border-gray-300 p-2">{new Date(payment.timestamp || 0).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
