@@ -11,18 +11,17 @@ import {
 } from "firebase/firestore";
 import { Payment } from "@/types";
 import { paymentSchema } from "@/lib/schemas/payment";
-import twilio from "twilio";
-import { console } from "inspector";
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID!,
-  process.env.TWILIO_AUTH_TOKEN!
-);
+import { sendPaymentNotification } from "@/lib/notifications";
+import { Stakeholder } from "@/types";
+
 
 export async function POST(req: Request) {
   try {
     const json: Payment = await req.json();
+    console.log("data json", json);
     const data = paymentSchema.parse(json); // Validate here
-    // Validate required fields
+    // Validate required fie  lds
+    console.log("data", data);
     if (!data.projectId || !data.amount || !data.category) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -158,39 +157,23 @@ export async function POST(req: Request) {
         totalPaymentsThisMonth: 1,
       });
     }
-    const stakeholdersRef = collection(db, `projects/${data.projectId}/stakeholders`);
     // Ideally, you have a way to find the exact stakeholder document. Let's assume we have the name in `data.stakeholder`
     // and we find the first stakeholder with that name:
-    if (data.stakeholder) {
-      const stakeholdersSnapshot = await getDoc(doc(stakeholdersRef, data.stakeholder));
-      if (stakeholdersSnapshot.exists()) {
-        const stakeholderData = stakeholdersSnapshot.data();
-        const contactNumber = stakeholderData.contact; // e.g., "+1234567890"
-
-        // Send WhatsApp message via Twilio
-        // Make sure your Twilio WhatsApp number is pre-approved and in the correct format:
-        if (contactNumber) {
-          console.log("Sending WhatsApp message to:", contactNumber);
-          console.log("from:", process.env.TWILIO_WHATSAPP_FROM_NUMBER);
-
-          const messageBody = `A new payment of amount PKR ${data.amount} was recorded for project: ${projectData.name}.
-
-Description: ${data.description || "N/A"}
-Category: ${data.category}
-Date: ${data.date}
-
-${data.screenshotUrl ? "Screenshot attached below:" : "No screenshot attached"}`;
-
-          await client.messages.create({
-            from: `whatsapp:${process.env.TWILIO_WHATSAPP_FROM_NUMBER}`,
-            to: `whatsapp:${contactNumber}`,
-            body: messageBody,
-            mediaUrl: data.screenshotUrl ? [data.screenshotUrl] : undefined,
-          });
-          
-        }
+    console.log("data", data);
+    if (data.stakeholder.id) {
+      const stakeholder = data.stakeholder;
+      // Send the WhatsApp notification
+      try {
+        const msgSid = await sendPaymentNotification(stakeholder, data);
+        console.log("WhatsApp message sent, SID:", msgSid);
+      } catch (notifyError) {
+        console.error("Error sending WhatsApp notification:", notifyError);
+        // Handle this error (log it, or inform the client if needed)
       }
+    } else {
+      console.warn("No stakeholder found with ID:", data.stakeholder);
     }
+
     return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
 
   } catch (error) {

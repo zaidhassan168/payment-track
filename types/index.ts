@@ -12,23 +12,18 @@ export type PaymentCategory =
 
 // Payment Type
 export interface Payment {
-  id?: string; // Assigned by Firestore on create.
+  id?: string;
   projectId: string;
-  date?: ISODateString;           // If not provided, set automatically at creation
+  date?: string;
   description?: string;
-  
-  // If this references a stakeholder by name or ID, clarify:
-  // If by ID:
-  // stakeholderId?: string;
-  // If by Name:
-  stakeholder?: string; 
-  item?: string; // e.g., "Cement", "Fuel"
-  category: PaymentCategory;
+  stakeholder: Stakeholder; // Now a full object, not just a string
+  item?: string;
+  category: string;
   amount: number;
-  sentTo?: string;       // Name or identifier of who received the payment
-  from?: string;         // Name or identifier of who sent the payment
+  sentTo?: string;
+  from?: string;
   screenshotUrl?: string;
-  timestamp?: ISODateString; // Auto-added if not specified
+  timestamp?: string;
 }
 
 // Stakeholder Type

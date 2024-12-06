@@ -299,7 +299,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                   <TableRow key={payment.id}>
                     <TableCell>{payment.date}</TableCell>
                     <TableCell>{payment.description}</TableCell>
-                    <TableCell>{payment.stakeholder}</TableCell>
+                    <TableCell>{payment.stakeholder.name}</TableCell>
                     <TableCell>{payment.item}</TableCell>
                     <TableCell>{payment.category}</TableCell>
                     <TableCell>PKR {new Intl.NumberFormat('en-PK').format(payment.amount)}</TableCell>
