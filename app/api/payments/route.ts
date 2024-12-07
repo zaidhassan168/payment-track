@@ -159,20 +159,20 @@ export async function POST(req: Request) {
     }
     // Ideally, you have a way to find the exact stakeholder document. Let's assume we have the name in `data.stakeholder`
     // and we find the first stakeholder with that name:
-    console.log("data", data);
-    if (data.stakeholder.id) {
-      const stakeholder = data.stakeholder;
-      // Send the WhatsApp notification
-      try {
-        const msgSid = await sendPaymentNotification(stakeholder, data);
-        console.log("WhatsApp message sent, SID:", msgSid);
-      } catch (notifyError) {
-        console.error("Error sending WhatsApp notification:", notifyError);
-        // Handle this error (log it, or inform the client if needed)
-      }
-    } else {
-      console.warn("No stakeholder found with ID:", data.stakeholder);
-    }
+    // console.log("data", data);
+    // if (data.stakeholder.id) {
+    //   const stakeholder = data.stakeholder;
+    //   // Send the WhatsApp notification
+    //   try {
+    //     const msgSid = await sendPaymentNotification(stakeholder, data);
+    //     console.log("WhatsApp message sent, SID:", msgSid);
+    //   } catch (notifyError) {
+    //     console.error("Error sending WhatsApp notification:", notifyError);
+    //     // Handle this error (log it, or inform the client if needed)
+    //   }
+    // } else {
+    //   console.warn("No stakeholder found with ID:", data.stakeholder);
+    // }
 
     return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
 
