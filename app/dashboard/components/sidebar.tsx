@@ -6,18 +6,11 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  LayoutDashboard,
-  CreditCard,
-  FolderKanban,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-} from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LayoutDashboard, CreditCard, FolderKanban, Settings, ChevronLeft, ChevronRight, Menu, HelpCircle } from 'lucide-react';
 import { UserButton } from "@clerk/nextjs";
-import { ClerkLogo } from "@/app/components/clerk-logo";
-import { NextLogo } from "@/app/components/next-logo";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -67,12 +60,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         )}
       >
         <div className="flex h-full flex-col border-r">
-          <div className="flex h-14 items-center px-3 py-4">
+          <div className="flex h-14 items-center justify-between px-3 py-4">
             {!isCollapsed && <h2 className="text-lg font-semibold">Dashboard</h2>}
             <Button
               variant="ghost"
               size="icon"
-              className="ml-auto"
+              className={cn("", isCollapsed && "ml-auto")}
               onClick={toggleSidebar}
             >
               {isCollapsed ? (
@@ -82,7 +75,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               )}
             </Button>
           </div>
-          <div className="px-3 py-2">
+          <div className="flex items-center px-3 py-2">
             <UserButton
               afterSignOutUrl="/"
               appearance={{
@@ -91,34 +84,71 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 },
               }}
             />
+            {!isCollapsed && (
+              <div className="ml-3">
+                <p className="text-sm font-medium">John Doe</p>
+                <p className="text-xs text-muted-foreground">john@example.com</p>
+              </div>
+            )}
           </div>
-          <ScrollArea className="flex-1">
-            <nav className="space-y-1 px-3 py-2">
+          <ScrollArea className="flex-1 px-3 py-2">
+            <nav className="space-y-1">
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <Button
-                    key={item.name}
-                    asChild
-                    variant={isActive ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start",
-                      isActive && "bg-secondary",
-                      isCollapsed && "px-2"
-                    )}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
-                      {!isCollapsed && <span>{item.name}</span>}
-                    </Link>
-                  </Button>
+                  <TooltipProvider key={item.name}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          asChild
+                          variant={isActive ? "secondary" : "ghost"}
+                          className={cn(
+                            "w-full justify-start",
+                            isActive && "bg-secondary",
+                            isCollapsed && "px-2"
+                          )}
+                        >
+                          <Link href={item.href}>
+                            <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                            {!isCollapsed && <span>{item.name}</span>}
+                            {item.name === "Payments" && !isCollapsed && (
+                              <Badge variant="outline" className="ml-auto">New</Badge>
+                            )}
+                          </Link>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="z-50">
+                        {item.name}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </nav>
           </ScrollArea>
+          <div className="mt-auto px-3 py-2">
+            <Separator className="my-2" />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start" asChild>
+                    <Link href="/help">
+                      <HelpCircle className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                      {!isCollapsed && <span>Help & Support</span>}
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="z-50">
+                  Help & Support
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {!isCollapsed && (
+              <p className="mt-2 text-xs text-muted-foreground">Version 1.0.0</p>
+            )}
+          </div>
         </div>
       </aside>
     </>
   );
 }
-

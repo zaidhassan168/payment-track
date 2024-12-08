@@ -6,11 +6,11 @@ import { NextLogo } from "../components/next-logo";
 import { useEffect, useState } from "react";
 import { getOverviewMetrics } from "@/app/services/overview";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from 'lucide-react';
 
-// Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement);
 
 export default function DashboardPage() {
@@ -18,7 +18,7 @@ export default function DashboardPage() {
     totalToday: number;
     totalMonth: number;
     projects: { id: string; name: string }[];
-    dailyTransfers?: { date: string; amount: number }[]; // Additional data for charts
+    dailyTransfers?: { date: string; amount: number }[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -28,21 +28,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const data = await getOverviewMetrics();
-        // data could include dailyTransfers if your backend supports it
-        // Otherwise, mock it:
-        const mockDailyTransfers = [
-          { date: "2023-07-01", amount: 1200 },
-          { date: "2023-07-02", amount: 800 },
-          { date: "2023-07-03", amount: 1500 },
-          { date: "2023-07-04", amount: 2000 },
-          { date: "2023-07-05", amount: 900 },
-        ];
-
-        setMetrics({
-          ...data,
-          dailyTransfers: mockDailyTransfers,
-        });
+        const data = await getOverviewMetrics(); 
+        // data is now assumed to have dailyTransfers
+        setMetrics(data);
       } catch (error) {
         console.error("Error fetching overview metrics:", error);
       } finally {
@@ -79,12 +67,12 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <main className="max-w-[75rem] w-full mx-auto px-6 py-4">
+    <main className="max-w-[75rem] w-full mx-auto px-6 py-4 bg-gray-50 min-h-screen">
       {/* Header */}
       <header className="flex items-center justify-between border-b pb-4 mb-6">
         <div className="flex items-center gap-4">
           <ClerkLogo />
-          <div aria-hidden className="w-px h-6 bg-[#C7C7C8]" />
+          <div aria-hidden className="w-px h-6 bg-gray-300" />
           <NextLogo />
         </div>
         <UserButton
@@ -99,50 +87,48 @@ export default function DashboardPage() {
 
       {/* Welcome Section */}
       <section className="mb-6">
-        <p className="text-[#5E5F6E] mt-2">
-          Welcome to your dashboard. Explore your projects and manage tasks efficiently.
+        <h1 className="text-2xl font-semibold text-gray-700">Welcome to your dashboard</h1>
+        <p className="text-gray-600 mt-2">
+          Manage your projects and expenses more efficiently with real-time insights.
         </p>
       </section>
 
-      {/* Metrics Section */}
       {loading ? (
         <div className="flex justify-center items-center h-32">
-          <p className="text-gray-500">Loading overview metrics...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
         </div>
       ) : metrics ? (
         <>
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {/* Total Transferred Today */}
+          {/* Metrics Section */}
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-2">Total Transferred Today</h2>
-              <p className="text-2xl text-green-500 font-semibold">
-                Rs {metrics.totalToday}
+              <h2 className="text-md font-medium text-gray-700 mb-1">Total Transferred Today</h2>
+              <p className="text-2xl text-green-600 font-bold">
+                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalToday)}
               </p>
             </div>
 
-            {/* Total Transferred This Month */}
             <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-2">Total Transferred This Month</h2>
-              <p className="text-2xl text-green-500 font-semibold">
-                Rs {metrics.totalMonth}
+              <h2 className="text-md font-medium text-gray-700 mb-1">Total Transferred This Month</h2>
+              <p className="text-2xl text-green-600 font-bold">
+                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalMonth)}
               </p>
             </div>
 
-            {/* Total Projects */}
             <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-lg font-bold mb-2">Total Projects</h2>
-              <p className="text-2xl text-blue-500 font-semibold">
+              <h2 className="text-md font-medium text-gray-700 mb-1">Total Projects</h2>
+              <p className="text-2xl text-blue-600 font-bold">
                 {metrics.projects.length}
               </p>
             </div>
           </section>
 
           {/* Analytics Section */}
-          <section className="mb-6 bg-white shadow rounded-lg p-4">
+          <section className="mb-8 bg-white shadow rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Analytics</h2>
+              <h2 className="text-xl font-bold text-gray-700">Analytics</h2>
               {averageDaily && (
-                <p className="text-sm text-gray-600">Average Daily Transfer: Rs {averageDaily}</p>
+                <p className="text-sm text-gray-600">Avg Daily: Rs {new Intl.NumberFormat('en-PK').format(Number(averageDaily))}</p>
               )}
             </div>
             {chartData ? (
@@ -150,20 +136,20 @@ export default function DashboardPage() {
                 <Line data={chartData} />
               </div>
             ) : (
-              <p className="text-gray-500">No daily transfer data available</p>
+              <p className="text-gray-500">No daily transfer data available.</p>
             )}
           </section>
 
           {/* Projects Section with Search */}
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Projects</h2>
-              <div className="flex items-center space-x-2">
+          <section className="mb-8 bg-white shadow rounded-lg p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4 sm:gap-0">
+              <h2 className="text-xl font-bold text-gray-700">Projects</h2>
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
                 <Input
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-48"
+                  className="w-full sm:w-48"
                 />
                 <Button
                   variant="outline"
