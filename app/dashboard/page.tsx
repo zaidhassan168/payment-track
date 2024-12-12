@@ -1,6 +1,5 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import { ClerkLogo } from "../components/clerk-logo";
 import { NextLogo } from "../components/next-logo";
 import { useEffect, useState } from "react";
@@ -75,14 +74,7 @@ export default function DashboardPage() {
           <div aria-hidden className="w-px h-6 bg-gray-300" />
           <NextLogo />
         </div>
-        <UserButton
-          afterSignOutUrl="/"
-          appearance={{
-            elements: {
-              userButtonAvatarBox: "size-6",
-            },
-          }}
-        />
+
       </header>
 
       {/* Welcome Section */}

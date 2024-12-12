@@ -1,10 +1,9 @@
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { ClerkLogo } from "./components/clerk-logo";
 import { NextLogo } from "./components/next-logo";
 import "./home.css";
-
+import { signIn } from "@/auth"
 export default function Home() {
   return (
     <>
@@ -26,21 +25,15 @@ export default function Home() {
               Simplify your workflow with a Next.js template powered by Clerk authentication.
             </p>
             <div className="flex gap-4">
-              <SignedIn>
-                <Link
-                  href="/dashboard"
-                  className="px-4 py-2 rounded-full bg-[#131316] text-white text-sm font-semibold"
-                >
-                  Go to Dashboard
-                </Link>
-              </SignedIn>
-              <SignedOut>
-                <SignInButton>
-                  <button className="px-4 py-2 rounded-full bg-[#131316] text-white text-sm font-semibold">
-                    Sign In
-                  </button>
-                </SignInButton>
-              </SignedOut>
+            <form
+      action={async () => {
+        "use server"
+        await signIn("google")
+      }}
+    >
+      <button type="submit">Signin with Google</button>
+    </form>
+
             </div>
           </section>
         </section>

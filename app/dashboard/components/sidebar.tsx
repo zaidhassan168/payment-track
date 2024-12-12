@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LayoutDashboard, CreditCard, FolderKanban, Settings, ChevronLeft, ChevronRight, Menu, HelpCircle } from 'lucide-react';
-import { UserButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-
+import { signOut } from "next-auth/react"
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
@@ -76,14 +75,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             </Button>
           </div>
           <div className="flex items-center px-3 py-2">
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  userButtonAvatarBox: isCollapsed ? "w-8 h-8" : "w-10 h-10",
-                },
-              }}
-            />
+           
             {!isCollapsed && (
               <div className="ml-3">
                 <p className="text-sm font-medium">John Doe</p>
@@ -127,6 +119,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             </nav>
           </ScrollArea>
           <div className="mt-auto px-3 py-2">
+            <Separator className="my-2" />
+            <Button onClick={() => signOut()}> Sign Out </Button> 
             <Separator className="my-2" />
             <TooltipProvider>
               <Tooltip>

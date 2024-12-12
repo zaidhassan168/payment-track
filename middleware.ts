@@ -1,11 +1,5 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
-
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) await auth.protect();
-});
+export { auth as middleware } from "@/auth"
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/"],
-};
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+}
