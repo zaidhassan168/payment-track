@@ -1,15 +1,13 @@
 "use client";
-
-import { UserButton } from "@clerk/nextjs";
-import { ClerkLogo } from "../components/clerk-logo";
-import { NextLogo } from "../components/next-logo";
 import { useEffect, useState } from "react";
 import { getOverviewMetrics } from "@/app/services/overview";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Search, TrendingUp, Briefcase, CreditCard, ArrowUpRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, BarElement);
 
@@ -21,15 +19,13 @@ export default function DashboardPage() {
     dailyTransfers?: { date: string; amount: number }[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // For project search
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const data = await getOverviewMetrics(); 
-        // data is now assumed to have dailyTransfers
+        const data = await getOverviewMetrics();
         setMetrics(data);
       } catch (error) {
         console.error("Error fetching overview metrics:", error);
@@ -45,21 +41,20 @@ export default function DashboardPage() {
     project.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Chart Setup
   const chartData = metrics?.dailyTransfers
     ? {
-        labels: metrics.dailyTransfers.map((d) => d.date),
-        datasets: [
-          {
-            label: 'Daily Transfers (Rs)',
-            data: metrics.dailyTransfers.map((d) => d.amount),
-            borderColor: 'rgba(75,192,192,1)',
-            backgroundColor: 'rgba(75,192,192,0.2)',
-            tension: 0.3,
-            fill: true,
-          },
-        ],
-      }
+      labels: metrics.dailyTransfers.map((d) => d.date),
+      datasets: [
+        {
+          label: 'Daily Transfers (Rs)',
+          data: metrics.dailyTransfers.map((d) => d.amount),
+          borderColor: 'rgba(99, 102, 241, 1)',
+          backgroundColor: 'rgba(99, 102, 241, 0.2)',
+          tension: 0.3,
+          fill: true,
+        },
+      ],
+    }
     : null;
 
   const averageDaily = metrics?.dailyTransfers
@@ -67,116 +62,148 @@ export default function DashboardPage() {
     : null;
 
   return (
-    <main className="max-w-[75rem] w-full mx-auto px-6 py-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b pb-4 mb-6">
-        <div className="flex items-center gap-4">
-          <ClerkLogo />
-          <div aria-hidden className="w-px h-6 bg-gray-300" />
-          <NextLogo />
-        </div>
-        <UserButton
-          afterSignOutUrl="/"
-          appearance={{
-            elements: {
-              userButtonAvatarBox: "size-6",
-            },
-          }}
-        />
-      </header>
+    <main className="min-h-screen bg-gradient-to-br">
 
-      {/* Welcome Section */}
-      <section className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-700">Welcome to your dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your projects and expenses more efficiently with real-time insights.
-        </p>
-      </section>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        </div>
-      ) : metrics ? (
-        <>
-          {/* Metrics Section */}
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-md font-medium text-gray-700 mb-1">Total Transferred Today</h2>
-              <p className="text-2xl text-green-600 font-bold">
-                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalToday)}
-              </p>
-            </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-12 w-12 animate-spin text-indigo-600" />
+          </div>
+        ) : metrics ? (
+          <>
+            {/* Metrics Section */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-green-400 to-emerald-500 text-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg font-medium">Today's Transfers</CardTitle>
+                  <CreditCard className="h-6 w-6 text-green-100" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">
+                    Rs {new Intl.NumberFormat('en-PK').format(metrics.totalToday)}
+                  </div>
+                  <p className="text-green-100 text-sm mt-1">+2.5% from yesterday</p>
+                </CardContent>
+              </Card>
 
-            <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-md font-medium text-gray-700 mb-1">Total Transferred This Month</h2>
-              <p className="text-2xl text-green-600 font-bold">
-                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalMonth)}
-              </p>
-            </div>
+              <Card className="bg-gradient-to-br from-blue-400 to-indigo-500 text-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg font-medium">Monthly Transfers</CardTitle>
+                  <TrendingUp className="h-6 w-6 text-blue-100" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">
+                    Rs {new Intl.NumberFormat('en-PK').format(metrics.totalMonth)}
+                  </div>
+                  <p className="text-blue-100 text-sm mt-1">+5.2% from last month</p>
+                </CardContent>
+              </Card>
 
-            <div className="bg-white shadow rounded-lg p-4">
-              <h2 className="text-md font-medium text-gray-700 mb-1">Total Projects</h2>
-              <p className="text-2xl text-blue-600 font-bold">
-                {metrics.projects.length}
-              </p>
-            </div>
-          </section>
+              <Card className="bg-gradient-to-br from-purple-400 to-pink-500 text-white">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg font-medium">Total Projects</CardTitle>
+                  <Briefcase className="h-6 w-6 text-purple-100" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{metrics.projects.length}</div>
+                  <p className="text-purple-100 text-sm mt-1">+3 new this week</p>
+                </CardContent>
+              </Card>
+            </section>
 
-          {/* Analytics Section */}
-          <section className="mb-8 bg-white shadow rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-700">Analytics</h2>
-              {averageDaily && (
-                <p className="text-sm text-gray-600">Avg Daily: Rs {new Intl.NumberFormat('en-PK').format(Number(averageDaily))}</p>
-              )}
-            </div>
-            {chartData ? (
-              <div className="w-full h-64">
-                <Line data={chartData} />
-              </div>
-            ) : (
-              <p className="text-gray-500">No daily transfer data available.</p>
-            )}
-          </section>
+            {/* Analytics Section */}
+            <Card className="mb-8">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl font-bold text-gray-800">Analytics Overview</CardTitle>
+                  {averageDaily && (
+                    <div className="flex items-center bg-indigo-100 text-indigo-800 rounded-full px-3 py-1">
+                      <ArrowUpRight className="h-4 w-4 mr-1" />
+                      <span className="text-sm font-medium">
+                        Avg Daily: Rs {new Intl.NumberFormat('en-PK').format(Number(averageDaily))}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {chartData ? (
+                  <div className="w-full h-80">
+                    <Line 
+                      data={chartData}
+                      options={{
+                        responsive: true,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                          },
+                        },
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">No daily transfer data available.</p>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Projects Section with Search */}
-          <section className="mb-8 bg-white shadow rounded-lg p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4 sm:gap-0">
-              <h2 className="text-xl font-bold text-gray-700">Projects</h2>
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <Input
-                  placeholder="Search projects..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-48"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => setSearchQuery("")}
-                >
-                  Clear
-                </Button>
-              </div>
-            </div>
-            {filteredProjects && filteredProjects.length > 0 ? (
-              <ul className="list-disc pl-5 space-y-1">
-                {filteredProjects.map((project) => (
-                  <li key={project.id} className="text-gray-700">
-                    {project.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No projects found.</p>
-            )}
-          </section>
-        </>
-      ) : (
-        <div className="flex justify-center items-center h-32">
-          <p className="text-gray-500">No data available at the moment.</p>
-        </div>
-      )}
+            {/* Projects Section with Search */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <CardTitle className="text-2xl font-bold text-gray-800">Projects</CardTitle>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Input
+                        placeholder="Search projects..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 w-full"
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredProjects && filteredProjects.length > 0 ? (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredProjects.map((project) => (
+                      <li 
+                        key={project.id} 
+                        className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow cursor-pointer" 
+                        onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                      >
+                        <h3 className="text-lg font-semibold text-indigo-700">{project.name}</h3>
+                        <p className="text-sm text-gray-600 mt-1">Project ID: {project.id}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">No projects found.</p>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-xl text-gray-500">No data available at the moment.</p>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
+

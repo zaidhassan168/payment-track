@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getPaymentsByProject } from "@/app/services/payments";
@@ -10,11 +11,10 @@ import ProjectModal from "../../components/ProjectModal";
 import EditStakeholderModal from "../../components/EditStakeHolderModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Edit, Plus, DollarSign, Calendar, User, Eye, Download, Pencil } from 'lucide-react';
 import { TabsTrigger, Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-
+import { ArrowLeft, Edit, Plus, DollarSign, Calendar, User, Eye, Download, Pencil, ChevronRight } from 'lucide-react';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title as ChartTitle } from 'chart.js';
 
@@ -28,7 +28,6 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [stakeholders, setStakeholders] = useState<Stakeholder[] | undefined>(undefined);
-
   const [editStakeholderModalOpen, setEditStakeholderModalOpen] = useState(false);
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
 
@@ -37,7 +36,6 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       const unwrappedParams = await params;
       setProjectId(unwrappedParams.id);
       
-      // Fetch all required data in one go
       Promise.all([
         fetchProjectDetails(unwrappedParams.id),
         fetchPayments(unwrappedParams.id),
@@ -142,13 +140,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
   const summary = getSummaryData();
 
-  // Charts Data
   const expensesData = {
     labels: summary.expensesBreakdown.map(b => b.name),
     datasets: [
       {
         data: summary.expensesBreakdown.map(b => b.value),
-        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#8A2BE2"],
+        backgroundColor: ["#94a3b8", "#64748b", "#475569", "#334155"],
+        borderColor: "#f8fafc",
+        borderWidth: 2,
       }
     ]
   };
@@ -159,7 +158,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       {
         label: "Amount (PKR)",
         data: [summary.totalIncome, summary.totalExpenses],
-        backgroundColor: ["#4CAF50", "#F44336"]
+        backgroundColor: ["#22c55e", "#ef4444"]
       }
     ]
   };
@@ -176,10 +175,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 p-4 md:p-8">
       <nav className="mb-8">
-        <Button variant="link" asChild>
-          <a href="/dashboard/projects" className="inline-flex items-center text-primary">
+        <Button variant="ghost" asChild className="hover:bg-slate-200 transition-colors">
+          <a href="/dashboard/projects" className="inline-flex items-center text-slate-700">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Projects
           </a>
@@ -192,78 +191,109 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="mb-8">
+          <Card className="mb-8 bg-white shadow-lg">
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2">
-              <CardTitle className="text-2xl sm:text-3xl font-bold">{project.name}</CardTitle>
-              <Button variant="secondary" onClick={() => setIsEditModalOpen(true)}>
+              <div>
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-slate-800">{project.name}</CardTitle>
+                <CardDescription className="text-slate-500">{project.client}</CardDescription>
+              </div>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(true)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Project
               </Button>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="flex items-center">
-                  <User className="h-5 w-5 text-muted-foreground mr-2" />
-                  <p className="text-sm font-medium">Client: <span className="text-foreground">{project.client}</span></p>
-                </div>
-                <div className="flex items-center">
-                  <DollarSign className="h-5 w-5 text-muted-foreground mr-2" />
-                  <p className="text-sm font-medium">Budget: <span className="text-foreground">PKR {new Intl.NumberFormat('en-PK').format(project.budget)}</span></p>
-                </div>
-                <div className="flex items-center">
-                  <DollarSign className="h-5 w-5 text-muted-foreground mr-2" />
-                  <p className="text-sm font-medium">Spent: <span className="text-foreground">PKR {new Intl.NumberFormat('en-PK').format(project.spent)}</span></p>
-                </div>
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
-                  <p className="text-sm font-medium">Deadline: <span className="text-foreground">{project.deadline || "Not set"}</span></p>
-                </div>
+                <Card className="bg-slate-50">
+                  <CardContent className="flex items-center p-4">
+                    <User className="h-5 w-5 text-slate-400 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Client</p>
+                      <p className="text-lg font-semibold text-slate-700">{project.client}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-50">
+                  <CardContent className="flex items-center p-4">
+                    <DollarSign className="h-5 w-5 text-slate-400 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Budget</p>
+                      <p className="text-lg font-semibold text-slate-700">PKR {new Intl.NumberFormat('en-PK').format(project.budget)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-50">
+                  <CardContent className="flex items-center p-4">
+                    <DollarSign className="h-5 w-5 text-slate-400 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Spent</p>
+                      <p className="text-lg font-semibold text-slate-700">PKR {new Intl.NumberFormat('en-PK').format(project.spent)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-slate-50">
+                  <CardContent className="flex items-center p-4">
+                    <Calendar className="h-5 w-5 text-slate-400 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-500">Deadline</p>
+                      <p className="text-lg font-semibold text-slate-700">{project.deadline || "Not set"}</p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </CardContent>
           </Card>
 
           <Tabs defaultValue="summary" className="mb-8">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="charts">Charts</TabsTrigger>
-              <TabsTrigger value="stakeholders">Stakeholders</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 bg-slate-100 p-1 rounded-lg">
+              <TabsTrigger value="summary" className="data-[state=active]:bg-white">Summary</TabsTrigger>
+              <TabsTrigger value="charts" className="data-[state=active]:bg-white">Charts</TabsTrigger>
+              <TabsTrigger value="stakeholders" className="data-[state=active]:bg-white">Stakeholders</TabsTrigger>
             </TabsList>
             <TabsContent value="summary">
-              <Card>
+              <Card className="bg-white shadow-md">
                 <CardHeader>
-                  <CardTitle>Financial Summary</CardTitle>
+                  <CardTitle className="text-xl text-slate-800">Financial Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">Total Income</span>
-                      <span className="text-2xl font-bold">
-                        PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">Total Expenses</span>
-                      <span className="text-2xl font-bold">
-                        PKR {new Intl.NumberFormat('en-PK').format(summary.totalExpenses)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">Balance</span>
-                      <span className="text-2xl font-bold">
-                        PKR {new Intl.NumberFormat('en-PK').format(summary.balance)}
-                      </span>
-                    </div>
+                    <Card className="bg-emerald-50">
+                      <CardContent className="p-4">
+                        <p className="text-sm font-medium text-emerald-600">Total Income</p>
+                        <p className="text-2xl font-bold text-emerald-700">
+                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-red-50">
+                      <CardContent className="p-4">
+                        <p className="text-sm font-medium text-red-600">Total Expenses</p>
+                        <p className="text-2xl font-bold text-red-700">
+                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalExpenses)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-blue-50">
+                      <CardContent className="p-4">
+                        <p className="text-sm font-medium text-blue-600">Balance</p>
+                        <p className="text-2xl font-bold text-blue-700">
+                          PKR {new Intl.NumberFormat('en-PK').format(summary.balance)}
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Expenses Breakdown</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-slate-700">Expenses Breakdown</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                       {summary.expensesBreakdown.map((item, index) => (
-                        <div key={index} className="flex flex-col">
-                          <span className="text-sm font-medium text-muted-foreground">{item.name}</span>
-                          <span className="text-lg font-bold">
-                            PKR {new Intl.NumberFormat('en-PK').format(item.value)}
-                          </span>
-                        </div>
+                        <Card key={index} className="bg-slate-50">
+                          <CardContent className="p-4">
+                            <p className="text-sm font-medium text-slate-500">{item.name}</p>
+                            <p className="text-lg font-bold text-slate-700">
+                              PKR {new Intl.NumberFormat('en-PK').format(item.value)}
+                            </p>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   </div>
@@ -272,17 +302,17 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
             </TabsContent>
             <TabsContent value="charts">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card>
+                <Card className="bg-white shadow-md">
                   <CardHeader>
-                    <CardTitle>Expenses Distribution</CardTitle>
+                    <CardTitle className="text-xl text-slate-800">Expenses Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Pie data={expensesData} />
+                    <Pie data={expensesData} options={{ responsive: true, maintainAspectRatio: false }} />
                   </CardContent>
                 </Card>
-                <Card>
+                <Card className="bg-white shadow-md">
                   <CardHeader>
-                    <CardTitle>Income vs Expenses</CardTitle>
+                    <CardTitle className="text-xl text-slate-800">Income vs Expenses</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Bar data={incomeVsExpensesData} options={{ responsive: true, maintainAspectRatio: false }} />
@@ -291,29 +321,29 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
               </div>
             </TabsContent>
             <TabsContent value="stakeholders">
-              <Card>
+              <Card className="bg-white shadow-md">
                 <CardHeader>
-                  <CardTitle>Project Stakeholders</CardTitle>
+                  <CardTitle className="text-xl text-slate-800">Project Stakeholders</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {stakeholders && stakeholders.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="text-slate-600">Name</TableHead>
+                          <TableHead className="text-slate-600">Role</TableHead>
+                          <TableHead className="text-slate-600">Contact</TableHead>
+                          <TableHead className="text-slate-600">Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {stakeholders.map((st) => (
                           <TableRow key={st.id}>
-                            <TableCell>{st.name}</TableCell>
-                            <TableCell>{st.role}</TableCell>
-                            <TableCell>{st.contact}</TableCell>
+                            <TableCell className="font-medium text-slate-700">{st.name}</TableCell>
+                            <TableCell className="text-slate-600">{st.role}</TableCell>
+                            <TableCell className="text-slate-600">{st.contact}</TableCell>
                             <TableCell>
-                              <Button variant="outline" size="sm" onClick={() => handleStakeholderEdit(st)}>
+                              <Button variant="outline" size="sm" onClick={() => handleStakeholderEdit(st)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                               </Button>
@@ -323,7 +353,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="text-center text-muted-foreground py-8">No stakeholders found for this project.</p>
+                    <p className="text-center text-slate-500 py-8">No stakeholders found for this project.</p>
                   )}
                 </CardContent>
               </Card>
@@ -331,62 +361,62 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           </Tabs>
 
           <div className="mb-8 flex flex-col sm:flex-row justify-between gap-4">
-            <Button onClick={() => setIsPaymentModalOpen(true)}>
+            <Button onClick={() => setIsPaymentModalOpen(true)} className=" text-white">
               <Plus className="mr-2 h-4 w-4" />
               Create Payment
             </Button>
-            <Button variant="secondary" onClick={exportToCSV}>
+            <Button variant="outline" onClick={exportToCSV} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
               <Download className="mr-2 h-4 w-4" />
               Export to CSV
             </Button>
           </div>
 
           {loading ? (
-            <Card>
+            <Card className="bg-white shadow-md">
               <CardContent>
                 <Skeleton className="h-[300px] w-full" />
               </CardContent>
             </Card>
           ) : payments.length === 0 ? (
-            <Card>
+            <Card className="bg-white shadow-md">
               <CardContent>
-                <p className="text-center text-muted-foreground py-8">No payments found.</p>
+                <p className="text-center text-slate-500 py-8">No payments found.</p>
               </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="bg-white shadow-md">
               <CardHeader>
-                <CardTitle>Payments</CardTitle>
+                <CardTitle className="text-xl text-slate-800">Payments</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Head</TableHead>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Sent To</TableHead>
-                        <TableHead>From</TableHead>
-                        <TableHead>Screenshot</TableHead>
+                        <TableHead className="text-slate-600">Date</TableHead>
+                        <TableHead className="text-slate-600">Description</TableHead>
+                        <TableHead className="text-slate-600">Head</TableHead>
+                        <TableHead className="text-slate-600">Item</TableHead>
+                        <TableHead className="text-slate-600">Category</TableHead>
+                        <TableHead className="text-slate-600">Amount</TableHead>
+                        <TableHead className="text-slate-600">Sent To</TableHead>
+                        <TableHead className="text-slate-600">From</TableHead>
+                        <TableHead className="text-slate-600">Screenshot</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {payments.map((payment) => (
                         <TableRow key={payment.id}>
-                          <TableCell>{payment.date}</TableCell>
-                          <TableCell>{payment.description}</TableCell>
-                          <TableCell>{payment.stakeholder.name}</TableCell>
-                          <TableCell>{payment.item}</TableCell>
-                          <TableCell>{payment.category}</TableCell>
-                          <TableCell>PKR {new Intl.NumberFormat('en-PK').format(payment.amount)}</TableCell>
-                          <TableCell>{payment.sentTo}</TableCell>
-                          <TableCell>{payment.from}</TableCell>
+                          <TableCell className="text-slate-700">{payment.date}</TableCell>
+                          <TableCell className="text-slate-700">{payment.description}</TableCell>
+                          <TableCell className="text-slate-700">{payment.stakeholder.name}</TableCell>
+                          <TableCell className="text-slate-700">{payment.item}</TableCell>
+                          <TableCell className="text-slate-700">{payment.category}</TableCell>
+                          <TableCell className="text-slate-700 font-medium">PKR {new Intl.NumberFormat('en-PK').format(payment.amount)}</TableCell>
+                          <TableCell className="text-slate-700">{payment.sentTo}</TableCell>
+                          <TableCell className="text-slate-700">{payment.from}</TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm" onClick={() => window.open(payment.screenshotUrl, "_blank")}>
+                            <Button variant="outline" size="sm" onClick={() => window.open(payment.screenshotUrl, "_blank")} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
                               <Eye className="mr-2 h-4 w-4" />
                               View
                             </Button>
@@ -401,7 +431,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           )}
         </motion.div>
       ) : (
-        <Card className="mb-8">
+        <Card className="mb-8 bg-white shadow-md">
           <CardHeader>
             <Skeleton className="h-8 w-[250px]" />
           </CardHeader>

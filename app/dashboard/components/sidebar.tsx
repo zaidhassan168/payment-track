@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +12,7 @@ import { LayoutDashboard, CreditCard, FolderKanban, Settings, ChevronLeft, Chevr
 import { UserButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useUser } from '@clerk/nextjs'
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -27,6 +29,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
+  const { user } = useUser()
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -52,30 +55,32 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       >
         <Menu className="h-4 w-4" />
       </Button>
-      <aside
+      <motion.aside
+        initial={isMobile ? { x: "-100%" } : { width: isCollapsed ? 64 : 256 }}
+        animate={isMobile ? { x: isCollapsed ? "-100%" : 0 } : { width: isCollapsed ? 64 : 256 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen bg-background transition-all duration-300 ease-in-out",
-          isCollapsed ? "w-16" : "w-64",
-          isMobile && isCollapsed && "-translate-x-full"
+          "fixed left-0 top-0 z-40 h-screen bg-background",
+          isCollapsed ? "w-16" : "w-64"
         )}
       >
-        <div className="flex h-full flex-col border-r">
-          <div className="flex h-14 items-center justify-between px-3 py-4">
-            {!isCollapsed && <h2 className="text-lg font-semibold">Dashboard</h2>}
+        <div className="flex h-full flex-col border-r border-border">
+          <div className="flex h-14 items-center justify-between px-3 py-4 bg-secondary/10">
+            {!isCollapsed && <h2 className="text-lg font-semibold text-primary">Dashboard</h2>}
             <Button
               variant="ghost"
               size="icon"
-              className={cn("", isCollapsed && "ml-auto")}
+              className={cn("hover:bg-secondary", isCollapsed && "ml-auto")}
               onClick={toggleSidebar}
             >
               {isCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-primary" />
               ) : (
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 text-primary" />
               )}
             </Button>
           </div>
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center px-3 py-4 bg-secondary/5">
             <UserButton
               afterSignOutUrl="/"
               appearance={{
@@ -86,8 +91,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             />
             {!isCollapsed && (
               <div className="ml-3">
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@example.com</p>
+                <p className="text-sm font-medium text-primary">{user?.fullName}</p>
+                <p className="text-xs text-muted-foreground">{user?.primaryEmailAddress?.toString()}</p>
               </div>
             )}
           </div>
@@ -103,8 +108,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                           asChild
                           variant={isActive ? "secondary" : "ghost"}
                           className={cn(
-                            "w-full justify-start",
-                            isActive && "bg-secondary",
+                            "w-full justify-start transition-colors",
+                            isActive && "bg-secondary text-secondary-foreground",
                             isCollapsed && "px-2"
                           )}
                         >
@@ -112,7 +117,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                             <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
                             {!isCollapsed && <span>{item.name}</span>}
                             {item.name === "Payments" && !isCollapsed && (
-                              <Badge variant="outline" className="ml-auto">New</Badge>
+                              <Badge variant="secondary" className="ml-auto">New</Badge>
                             )}
                           </Link>
                         </Button>
@@ -126,12 +131,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               })}
             </nav>
           </ScrollArea>
-          <div className="mt-auto px-3 py-2">
+          <div className="mt-auto px-3 py-4 bg-secondary/5">
             <Separator className="my-2" />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start" asChild>
+                  <Button variant="ghost" className="w-full justify-start hover:bg-secondary/80 hover:text-secondary-foreground" asChild>
                     <Link href="/help">
                       <HelpCircle className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
                       {!isCollapsed && <span>Help & Support</span>}
@@ -144,11 +149,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               </Tooltip>
             </TooltipProvider>
             {!isCollapsed && (
-              <p className="mt-2 text-xs text-muted-foreground">Version 1.0.0</p>
+              <p className="mt-2 text-xs text-muted-foreground text-center">Version 1.0.0</p>
             )}
           </div>
         </div>
-      </aside>
+      </motion.aside>
     </>
   );
 }
+
