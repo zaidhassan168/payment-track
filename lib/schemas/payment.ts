@@ -14,4 +14,5 @@ export const paymentSchema = z.object({
   from: z.string().optional(),
   screenshotUrl: z.string().url().optional(),
   timestamp: z.string().optional(),
+  projectName: z.string().optional(),
 });

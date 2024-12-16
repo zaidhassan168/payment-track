@@ -24,6 +24,7 @@ export interface Payment {
   from?: string;
   screenshotUrl?: string;
   timestamp?: string;
+  projectName?: string;
 }
 
 // Stakeholder Type

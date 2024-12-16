@@ -8,6 +8,7 @@ import {
   getDoc,
   setDoc,
   increment,
+  getDocs,
 } from "firebase/firestore";
 import { Payment } from "@/types";
 import { paymentSchema } from "@/lib/schemas/payment";
@@ -185,3 +186,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
+export async function GET(request: Request) {
+  try {
+   // here write the api to gget the daata from the firestore database of payment collection
+   const payments = await getDocs(collection(db, "payments"));
+   const paymentsData = payments.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+   return NextResponse.json(paymentsData, { status: 200 });}
+   catch (error) {
+    console.error("Error fetching payments:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+   }
+  }

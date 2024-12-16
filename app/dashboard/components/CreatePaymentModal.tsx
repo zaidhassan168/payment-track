@@ -101,6 +101,7 @@ export default function CreatePaymentModal({
         screenshotUrl,
         timestamp: new Date().toISOString(),
         category: formData.category || "income",
+        projectName: formData.projectName || "Unknown Project",
       } as Payment;
 
       console.log("Final paymentData:", paymentData);
