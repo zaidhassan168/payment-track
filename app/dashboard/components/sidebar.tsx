@@ -7,12 +7,26 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, CreditCard, FolderKanban, Settings, ChevronLeft, ChevronRight, Menu, HelpCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  LayoutDashboard,
+  CreditCard,
+  FolderKanban,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  HelpCircle,
+} from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useUser } from '@clerk/nextjs'
+import { useUser } from "@clerk/nextjs";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -29,7 +43,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
-  const { user } = useUser()
+  const { user } = useUser();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -57,7 +71,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       </Button>
       <motion.aside
         initial={isMobile ? { x: "-100%" } : { width: isCollapsed ? 64 : 256 }}
-        animate={isMobile ? { x: isCollapsed ? "-100%" : 0 } : { width: isCollapsed ? 64 : 256 }}
+        animate={
+          isMobile
+            ? { x: isCollapsed ? "-100%" : 0 }
+            : { width: isCollapsed ? 64 : 256 }
+        }
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed left-0 top-0 z-40 h-screen bg-background",
@@ -66,7 +84,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       >
         <div className="flex h-full flex-col border-r border-border">
           <div className="flex h-14 items-center justify-between px-3 py-4 bg-secondary/10">
-            {!isCollapsed && <h2 className="text-lg font-semibold text-primary">Dashboard</h2>}
+            {!isCollapsed && (
+              <h2 className="text-lg font-semibold text-primary">Dashboard</h2>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -91,8 +111,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             />
             {!isCollapsed && (
               <div className="ml-3">
-                <p className="text-sm font-medium text-primary">{user?.fullName}</p>
-                <p className="text-xs text-muted-foreground">{user?.primaryEmailAddress?.toString()}</p>
+                <p className="text-sm font-medium text-primary">
+                  {user?.fullName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {user?.primaryEmailAddress?.toString()}
+                </p>
               </div>
             )}
           </div>
@@ -114,10 +138,20 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                           )}
                         >
                           <Link href={item.href}>
-                            <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                            <item.icon
+                              className={cn(
+                                "h-4 w-4",
+                                !isCollapsed && "mr-2",
+                                isActive
+                                  ? "text-primary"
+                                  : "text-gray-400" // Muted color for inactive icons
+                              )}
+                            />
                             {!isCollapsed && <span>{item.name}</span>}
                             {item.name === "Payments" && !isCollapsed && (
-                              <Badge variant="secondary" className="ml-auto">New</Badge>
+                              <Badge variant="secondary" className="ml-auto">
+                                New
+                              </Badge>
                             )}
                           </Link>
                         </Button>
@@ -136,9 +170,19 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start hover:bg-secondary/80 hover:text-secondary-foreground" asChild>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start hover:bg-secondary/80 hover:text-secondary-foreground"
+                    asChild
+                  >
                     <Link href="/help">
-                      <HelpCircle className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                      <HelpCircle
+                        className={cn(
+                          "h-4 w-4",
+                          !isCollapsed && "mr-2",
+                          "text-gray-400" // Muted icon for Help
+                        )}
+                      />
                       {!isCollapsed && <span>Help & Support</span>}
                     </Link>
                   </Button>
@@ -149,7 +193,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               </Tooltip>
             </TooltipProvider>
             {!isCollapsed && (
-              <p className="mt-2 text-xs text-muted-foreground text-center">Version 1.0.0</p>
+              <p className="mt-2 text-xs text-muted-foreground text-center">
+                Version 1.0.0
+              </p>
             )}
           </div>
         </div>
@@ -157,4 +203,3 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     </>
   );
 }
-
