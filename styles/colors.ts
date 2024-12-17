@@ -1,22 +1,19 @@
 export const colors = {
     primary: 'hsl(215, 50%, 23%)',
-    primaryMuted: 'hsl(215, 50%, 23%, 0.1)',
     secondary: 'hsl(42, 87%, 55%)',
-    secondaryMuted: 'hsl(42, 87%, 55%, 0.1)',
     accent: 'hsl(152, 57%, 58%)',
-    accentMuted: 'hsl(152, 57%, 58%, 0.1)',
+    info: 'hsl(200, 98%, 39%)',
+    warning: 'hsl(32, 95%, 44%)',
+    error: 'hsl(354, 70%, 54%)',
+    success: 'hsl(141, 71%, 48%)',
     background: 'hsl(0, 0%, 100%)',
     foreground: 'hsl(215, 25%, 27%)',
     muted: 'hsl(210, 40%, 96.1%)',
     mutedForeground: 'hsl(215, 25%, 40%)',
     border: 'hsl(214, 32%, 91%)',
-    input: 'hsl(214, 32%, 91%)',
-    ring: 'hsl(215, 50%, 23%, 0.3)',
-    success: 'hsl(152, 57%, 58%)',
-    warning: 'hsl(42, 87%, 55%)',
-    error: 'hsl(354, 70%, 54%)',
-    info: 'hsl(200, 98%, 39%)',
   };
+  
+  
   
   export const chartColors = [
     'hsl(215, 50%, 23%)',  // Muted blue

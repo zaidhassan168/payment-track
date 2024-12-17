@@ -35,7 +35,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion"; // Import motion from framer-motion
-
+import {colors} from '@/styles/colors';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -79,24 +79,24 @@ export default function DashboardPage() {
 
   const chartData = metrics?.dailyTransfers
     ? {
-        labels: metrics.dailyTransfers.map((d) => d.date),
-        datasets: [
-          {
-            label: "Daily Transfers (Rs)",
-            data: metrics.dailyTransfers.map((d) => d.amount),
-            borderColor: "rgb(75, 192, 192)",
-            tension: 0.4,
-            fill: false,
-          },
-        ],
-      }
+      labels: metrics.dailyTransfers.map((d) => d.date),
+      datasets: [
+        {
+          label: "Daily Transfers (Rs)",
+          data: metrics.dailyTransfers.map((d) => d.amount),
+          borderColor: "rgb(75, 192, 192)",
+          tension: 0.4,
+          fill: false,
+        },
+      ],
+    }
     : null;
 
   const averageDaily = metrics?.dailyTransfers
     ? (
-        metrics.dailyTransfers.reduce((sum, d) => sum + d.amount, 0) /
-        metrics.dailyTransfers.length
-      ).toFixed(2)
+      metrics.dailyTransfers.reduce((sum, d) => sum + d.amount, 0) /
+      metrics.dailyTransfers.length
+    ).toFixed(2)
     : null;
 
   // Variants for card animations
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Today's Transfers
                     </CardTitle>
-                    <CreditCard className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <CreditCard className="h-5 w-5  text-green-500" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -147,11 +147,11 @@ export default function DashboardPage() {
                       {new Intl.NumberFormat("en-PK").format(metrics.totalToday)}
                     </div>
                     <Badge
-  variant="default"
-  className="mt-1 text-xs bg-green-100 text-green-700"
->
-  +2.5% from yesterday
-</Badge>
+                      variant="default"
+                      className="mt-1 text-xs bg-green-100 text-green-700"
+                    >
+                      +2.5% from yesterday
+                    </Badge>
 
                   </CardContent>
                 </Card>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Monthly Transfers
                     </CardTitle>
-                    <TrendingUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <TrendingUp className="h-5 w-5  text-green-500" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                     <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Total Projects
                     </CardTitle>
-                    <Briefcase className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <Briefcase className="h-5 w-5  text-green-500" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -353,7 +353,7 @@ export default function DashboardPage() {
                             </CardHeader>
                             <CardContent>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Project ID: {project.id}
+                                {project.name}
                               </p>
                             </CardContent>
                           </Card>
