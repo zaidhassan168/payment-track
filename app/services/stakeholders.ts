@@ -3,10 +3,20 @@ import { doc, updateDoc } from "firebase/firestore";
 import { Stakeholder } from "@/types";
 
 export async function updateStakeholder(projectId: string, stakeholderId: string, updates: Partial<Stakeholder>) {
-  const stakeholderRef = doc(db, `projects/${projectId}/stakeholders/${stakeholderId}`);
-  await updateDoc(stakeholderRef, updates);
-}
+  const response = await fetch(`/api/projects/${projectId}/stakeholders/${stakeholderId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updates),
+  });
 
+  if (!response.ok) {
+    throw new Error('Failed to update stakeholder');
+  }
+
+  return response.json();
+}
 export async function getStakeholdersByProject(projectId: string) {
   const response = await fetch(`/api/projects/${projectId}/stakeholders`);
   if (!response.ok) {
