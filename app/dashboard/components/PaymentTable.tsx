@@ -43,7 +43,9 @@ export default function PaymentTable() {
             {payments.map((payment) => (
               <tr key={payment.id}>
                 <td className="border border-gray-300 p-2">{payment.projectId}</td>
-                <td className="border border-gray-300 p-2">{payment.stakeholder.name}</td>
+                <td className="border border-gray-300 p-2">
+                  {payment.stakeholder?.name || 'Unknown Stakeholder'}
+                </td>
                 <td className="border border-gray-300 p-2">{payment.amount}</td>
                 <td className="border border-gray-300 p-2">{new Date(payment.timestamp || 0).toLocaleString()}</td>
               </tr>

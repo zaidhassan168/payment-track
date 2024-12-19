@@ -3,8 +3,15 @@ import { doc, updateDoc } from "firebase/firestore";
 import { Stakeholder } from "@/types";
 
 export async function updateStakeholder(projectId: string, stakeholderId: string, updates: Partial<Stakeholder>) {
+  if (!projectId || !stakeholderId) {
+    throw new Error('Project ID and stakeholder ID are required');
+  }
   const stakeholderRef = doc(db, `projects/${projectId}/stakeholders/${stakeholderId}`);
-  await updateDoc(stakeholderRef, updates);
+  try {
+    await updateDoc(stakeholderRef, updates);
+  } catch (error) {
+    throw new Error(`Failed to update stakeholder: ${error.message}`);
+  }
 }
 
 export async function getStakeholdersByProject(projectId: string) {

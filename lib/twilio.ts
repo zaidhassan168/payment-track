@@ -30,9 +30,17 @@ export async function sendWhatsAppMessage({
   const client = twilio(accountSid, authToken);
 
   // Construct the message create options
-  const messageOptions: any = {
-    from: `whatsapp:${fromNumber}`,
-    to: `whatsapp:${toNumber}`,
+  const messageOptions: twilio.Twilio.MessageListInstanceCreateOptions = {
+    const validatePhoneNumber = (number: string) => {
+      const cleaned = number.replace(/\D/g, '');
+      if (cleaned.length < 10 || cleaned.length > 15) {
+        throw new Error(`Invalid phone number format: ${number}`);
+      }
+      return cleaned;
+    };
+
+    from: `whatsapp:${validatePhoneNumber(fromNumber)}`,
+    to: `whatsapp:${validatePhoneNumber(toNumber)}`,
   };
 
   // If using Content API templates:
@@ -46,6 +54,13 @@ export async function sendWhatsAppMessage({
     messageOptions.body = "Hello from Next.js via Twilio!";
   }
 
-  const message = await client.messages.create(messageOptions);
-  return message.sid;
+  try {
+    const message = await client.messages.create(messageOptions);
+    return message.sid;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to send WhatsApp message: ${error.message}`);
+    }
+    throw error;
+  }
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { addStakeholder } from "@/app/services/projects";
 import { Stakeholder } from "@/types";
-import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
+import { showSuccessToast, showErrorToast } from "@/lib/toast-utils";
 
 export default function AddStakeholderModal({ projectId, onStakeholderAddedAction }: { projectId: string; onStakeholderAddedAction: () => void }) {
   const [isOpen, setIsOpen] = useState(false);

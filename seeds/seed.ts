@@ -5,7 +5,13 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string);
+} catch (error) {
+  console.error('Invalid service account JSON in environment variable:', error);
+  process.exit(1);
+}
 
 initializeApp({
   credential: cert(serviceAccount),
@@ -83,10 +89,23 @@ async function seed() {
   const today = new Date().toISOString().split('T')[0];
   await db.collection("overview").doc(today).set({
     date: today,
-    totalTransferredToday: faker.number.int({ min: 100_000, max: 1_000_000 }),
-    totalPaymentsToday: faker.number.int({ min: 10, max: 50 }),
-    totalTransferredThisMonth: faker.number.int({ min: 1_000_000, max: 10_000_000 }),
-  });
+    const today = new Date().toISOString().split('T')[0];
+    const thisMonth = today.slice(0, 7);
+
+    // Calculate actual totals from payments
+    const payments = await db.collection("payments")
+      .where("date", ">=", thisMonth)
+      .get();
+
+    const todayPayments = payments.docs.filter(doc => doc.data().date === today);
+    const monthPayments = payments.docs;
+
+    await db.collection("overview").doc(today).set({
+      date: today,
+      totalTransferredToday: todayPayments.reduce((sum, doc) => sum + doc.data().amount, 0),
+      totalPaymentsToday: todayPayments.length,
+      totalTransferredThisMonth: monthPayments.reduce((sum, doc) => sum + doc.data().amount, 0),
+    });
 
   const currentMonth = today.slice(0, 7);
   await db.collection("overview").doc(`month-${currentMonth}`).set({

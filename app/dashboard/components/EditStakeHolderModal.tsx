@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Stakeholder } from "@/types";
-import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
+import { showSuccessToast, showErrorToast } from "@/lib/toast-utils";
 
 type EditStakeholderModalProps = {
   isOpen: boolean;

@@ -16,8 +16,24 @@ export async function POST(req: Request) {
   try {
     const data = await req.json() as Project & { stakeholders: Stakeholder[] };
 
-    if (!data.name || !data.budget || !data.client) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    import { z } from "zod";
+
+    const projectSchema = z.object({
+      name: z.string().min(1),
+      budget: z.number().positive(),
+      client: z.string().min(1),
+      deadline: z.string().datetime().nullable(),
+      stakeholders: z.array(z.object({
+        name: z.string().min(1),
+        role: z.string().min(1),
+        contact: z.string().min(1)
+      }))
+    });
+
+    const result = projectSchema.safeParse(data);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.format() }, { status: 400 });
+    }
     }
 
     // Initialize paymentSummary if you want a default structure
@@ -33,7 +49,7 @@ export async function POST(req: Request) {
     };
 
     // Create a new project document with default values
-    const projectRef = await addDoc(collection(db, "projects"), {
+    const projectData = {
       name: data.name,
       budget: data.budget,
       spent: 0, // Default value for spent
@@ -42,23 +58,22 @@ export async function POST(req: Request) {
       deadline: data.deadline || null, // store null if not provided
       // Initialize paymentSummary if needed:
       paymentSummary: defaultPaymentSummary
-    });
+    };
 
-    // Add stakeholders to the project's `stakeholders` subcollection
-    const stakeholdersRef = collection(db, `projects/${projectRef.id}/stakeholders`);
-    const batch = writeBatch(db);
-
-    data.stakeholders.forEach((stakeholder) => {
-      // Remove undefined optional fields if needed or just store as is
-      // Cast or ensure correct structure (stakeholder interface already ensures correct typing)
-      const stakeholderData: Stakeholder = {
-        name: stakeholder.name,
-        role: stakeholder.role,
-        contact: stakeholder.contact
-      };
+    await runTransaction(db, async (transaction) => {
+      const projectRef = await addDoc(collection(db, "projects"), projectData);
+      const stakeholdersRef = collection(db, `projects/${projectRef.id}/stakeholders`);
       
-      const stakeholderDocRef = doc(stakeholdersRef); // Auto-generate ID
-      batch.set(stakeholderDocRef, stakeholderData);
+      for (const stakeholder of data.stakeholders) {
+        const stakeholderData: Stakeholder = {
+          name: stakeholder.name,
+          role: stakeholder.role,
+          contact: stakeholder.contact
+        };
+        
+        const stakeholderDocRef = doc(stakeholdersRef);
+        transaction.set(stakeholderDocRef, stakeholderData);
+      }
     });
 
     await batch.commit();
@@ -73,9 +88,23 @@ export async function POST(req: Request) {
 // GET: Retrieve all projects
 export async function GET() {
   try {
-    const projectsQuery = query(collection(db, "projects"));
-    const projectsSnapshot = await getDocs(projectsQuery);
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit') ?? '10');
+    const page = parseInt(searchParams.get('page') ?? '1');
+    const startAfter = searchParams.get('startAfter');
 
+    let projectsQuery = query(
+      collection(db, "projects"),
+      orderBy("name"),
+      limit(limit)
+    );
+
+    if (startAfter) {
+      const startAfterDoc = await getDoc(doc(db, "projects", startAfter));
+      projectsQuery = query(projectsQuery, startAfter(startAfterDoc));
+    }
+
+    const projectsSnapshot = await getDocs(projectsQuery);
     const projects = await Promise.all(
       projectsSnapshot.docs.map(async (projectDoc) => {
         const projectData = projectDoc.data();

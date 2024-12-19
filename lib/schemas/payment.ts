@@ -12,7 +12,11 @@ export const paymentSchema = z.object({
   amount: z.number().positive("amount must be a positive number"),
   sentTo: z.string().optional(),
   from: z.string().optional(),
-  screenshotUrl: z.string().url().optional(),
+  screenshotUrl: z.string()
+    .url()
+    .regex(/^https:\/\//i, "URL must use HTTPS")
+    .optional()
+    .transform((val) => val || null),
   timestamp: z.string().optional(),
   projectName: z.string().optional(),
 });
