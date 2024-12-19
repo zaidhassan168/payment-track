@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Stakeholder } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
+
 type EditStakeholderModalProps = {
   isOpen: boolean;
   projectId: string;
@@ -26,7 +27,7 @@ export default function EditStakeholderModal({
   const [role, setRole] = useState("");
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
-  const {toast} = useToast();
+  // const {toast} = useToast();
   useEffect(() => {
     if (stakeholder) {
       setName(stakeholder.name);
@@ -43,20 +44,13 @@ export default function EditStakeholderModal({
     try {
       const { updateStakeholder } = await import("@/app/services/stakeholders");
       await updateStakeholder(projectId, stakeholder.id!, { name, role, contact });
-      toast({
-        title: "Stakeholder updated",
-        description: "The stakeholder information has been successfully updated.",
-        variant: "default",
-      });
+      showSuccessToast("Stakeholder updated successfully");
       onSuccess();
       onClose();
     } catch (error) {
+      showErrorToast("Failed to update stakeholder");
       console.error("Error updating stakeholder:", error);
-      toast({
-        title: "Error",
-        description: "There was an error updating the stakeholder. Please try again.",
-        variant: "destructive",
-      });
+
     } finally {
       setLoading(false);
     }

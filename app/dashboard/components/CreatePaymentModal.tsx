@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
+import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
 
 type PaymentFieldValue = string | number | Date | Stakeholder;
 
@@ -107,11 +108,12 @@ export default function CreatePaymentModal({
       console.log("Final paymentData:", paymentData);
 
       await addPayment(paymentData);
+      showSuccessToast("Payment created successfully");
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Error creating payment:", error);
-      alert("Failed to create payment.");
+      showErrorToast("Failed to create payment");
     } finally {
       setLoading(false);
     }
