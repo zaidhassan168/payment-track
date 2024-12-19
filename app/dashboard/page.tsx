@@ -308,7 +308,7 @@ export default function DashboardPage() {
                       </div>
                       <Button
                         variant="secondary"
-                        onClick={() => router.push("/dashboard/projects/create")}
+                        onClick={() => router.push("/dashboard/projects")}
                       >
                         <PlusCircle className="h-4 w-4 mr-2" />
                         Create Project

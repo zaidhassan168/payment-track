@@ -18,7 +18,7 @@ export interface Payment {
   description?: string;
   stakeholder: Stakeholder; // Now a full object, not just a string
   item?: string;
-  category: string;
+  category: PaymentCategory;
   amount: number;
   sentTo?: string;
   from?: string;
