@@ -27,40 +27,53 @@ export default function EditStakeholderModal({
   const [role, setRole] = useState("");
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
-  // const {toast} = useToast();
+
   useEffect(() => {
     if (stakeholder) {
       setName(stakeholder.name);
       setRole(stakeholder.role);
       setContact(stakeholder.contact);
+    } else {
+      // Reset fields when adding a new stakeholder
+      setName("");
+      setRole("");
+      setContact("");
     }
   }, [stakeholder]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stakeholder) return;
   
     setLoading(true);
     try {
-      const { updateStakeholder } = await import("@/app/services/stakeholders");
-      await updateStakeholder(projectId, stakeholder.id!, { name, role, contact });
-      showSuccessToast("Stakeholder updated successfully");
+      if (stakeholder) {
+        // Update existing stakeholder
+        const { updateStakeholder } = await import("@/app/services/stakeholders");
+        await updateStakeholder(projectId, stakeholder.id!, { name, role, contact });
+        showSuccessToast("Stakeholder updated successfully");
+      } else {
+        // Add new stakeholder
+        const { addStakeholder } = await import("@/app/services/stakeholders");
+        await addStakeholder(projectId, { name, role, contact });
+        showSuccessToast("Stakeholder added successfully");
+      }
       onSuccess();
       onClose();
     } catch (error) {
-      showErrorToast("Failed to update stakeholder");
-      console.error("Error updating stakeholder:", error);
-
+      showErrorToast(stakeholder ? "Failed to update stakeholder" : "Failed to add stakeholder");
+      console.error("Error with stakeholder operation:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const isAddMode = !stakeholder;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Stakeholder</DialogTitle>
+          <DialogTitle>{isAddMode ? "Add Stakeholder" : "Edit Stakeholder"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -79,7 +92,7 @@ export default function EditStakeholderModal({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={loading}>
-              {loading ? "Updating..." : "Update"}
+              {loading ? (isAddMode ? "Adding..." : "Updating...") : (isAddMode ? "Add" : "Update")}
             </Button>
           </DialogFooter>
         </form>
@@ -87,3 +100,4 @@ export default function EditStakeholderModal({
     </Dialog>
   );
 }
+

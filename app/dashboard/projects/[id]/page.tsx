@@ -30,6 +30,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [stakeholders, setStakeholders] = useState<Stakeholder[] | undefined>(undefined);
   const [editStakeholderModalOpen, setEditStakeholderModalOpen] = useState(false);
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
+  const [stakeholderModalOpen, setStakeholderModalOpen] = useState(false);
 
   useEffect(() => {
     const unwrapParams = async () => {
@@ -90,6 +91,23 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
     setIsEditModalOpen(false);
   };
+
+  const handleAddStakeholder = () => {
+    setSelectedStakeholder(null);
+    setStakeholderModalOpen(true);
+  };
+
+  const handleEditStakeholder = (stakeholder: Stakeholder) => {
+    setSelectedStakeholder(stakeholder);
+    setStakeholderModalOpen(true);
+  };
+
+  const handleStakeholderModalSuccess = () => {
+    if (projectId) {
+      fetchStakeholders(projectId);
+    }
+  };
+
 
   const exportToCSV = () => {
     const csvHeader = ["Date,Description,Head,Item,Category,Amount,Sent To,From,Screenshot URL"];
@@ -320,44 +338,48 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 </Card>
               </div>
             </TabsContent>
-            <TabsContent value="stakeholders">
-              <Card className="bg-white shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-xl text-slate-800">Project Stakeholders</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {stakeholders && stakeholders.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-slate-600">Name</TableHead>
-                          <TableHead className="text-slate-600">Role</TableHead>
-                          <TableHead className="text-slate-600">Contact</TableHead>
-                          <TableHead className="text-slate-600">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {stakeholders.map((st) => (
-                          <TableRow key={st.id}>
-                            <TableCell className="font-medium text-slate-700">{st.name}</TableCell>
-                            <TableCell className="text-slate-600">{st.role}</TableCell>
-                            <TableCell className="text-slate-600">{st.contact}</TableCell>
-                            <TableCell>
-                              <Button variant="outline" size="sm" onClick={() => handleStakeholderEdit(st)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <p className="text-center text-slate-500 py-8">No stakeholders found for this project.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+           <TabsContent value="stakeholders">
+    <Card className="bg-white shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-xl text-slate-800">Project Stakeholders</CardTitle>
+        <Button onClick={handleAddStakeholder}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Stakeholder
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {stakeholders && stakeholders.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-slate-600">Name</TableHead>
+                <TableHead className="text-slate-600">Role</TableHead>
+                <TableHead className="text-slate-600">Contact</TableHead>
+                <TableHead className="text-slate-600">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {stakeholders.map((st) => (
+                <TableRow key={st.id}>
+                  <TableCell className="font-medium text-slate-700">{st.name}</TableCell>
+                  <TableCell className="text-slate-600">{st.role}</TableCell>
+                  <TableCell className="text-slate-600">{st.contact}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" size="sm" onClick={() => handleEditStakeholder(st)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <p className="text-center text-slate-500 py-8">No stakeholders found for this project.</p>
+        )}
+      </CardContent>
+    </Card>
+  </TabsContent>
           </Tabs>
 
           <div className="mb-8 flex flex-col sm:flex-row justify-between gap-4">
@@ -458,13 +480,15 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         onSuccess={handleProjectUpdated}
       />
 
-      <EditStakeholderModal
-        isOpen={editStakeholderModalOpen}
-        projectId={projectId || ""}
-        stakeholder={selectedStakeholder}
-        onClose={() => setEditStakeholderModalOpen(false)}
-        onSuccess={handleStakeholderUpdated}
-      />
+      
+  <EditStakeholderModal
+    isOpen={stakeholderModalOpen}
+    projectId={projectId || ""}
+    stakeholder={selectedStakeholder}
+    onClose={() => setStakeholderModalOpen(false)}
+    onSuccess={handleStakeholderModalSuccess}
+  />
+
     </div>
   );
 }

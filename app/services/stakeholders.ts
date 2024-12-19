@@ -25,3 +25,21 @@ export async function getStakeholdersByProject(projectId: string) {
   const data = await response.json();
   return data; // This should be Stakeholder[]
 }
+
+
+export const addStakeholder = async (projectId: string, stakeholder: Stakeholder): Promise<string> => {
+  const response = await fetch(`/api/projects/${projectId}/stakeholders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(stakeholder),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to add stakeholder');
+  }
+
+  const data = await response.json();
+  return data.id;
+};
