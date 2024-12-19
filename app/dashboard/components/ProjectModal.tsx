@@ -50,8 +50,17 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
     e.preventDefault()
     const { name, budget, client, deadline } = formData
 
-    if (!name || !budget || !client ) {
-      alert("All fields are required!")
+    if (!name?.trim()) {
+      toast.error("Project name is required")
+      return
+    }
+    if (!client?.trim()) {
+      toast.error("Client name is required")
+      return
+    }
+    const budgetNum = Number(budget)
+    if (!budget || isNaN(budgetNum) || budgetNum <= 0) {
+      toast.error("Please enter a valid budget amount")
       return
     }
 
