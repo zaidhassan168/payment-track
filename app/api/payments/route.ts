@@ -59,21 +59,26 @@ export async function POST(req: Request) {
     //   screenshotUrl: data.screenshotUrl || "",
     //   timestamp: data.timestamp,
     // });
-    const paymentRef = await addDoc(collection(db, "payments"), data);
-
-    // Fetch the project
     const projectRef = doc(db, "projects", data.projectId);
     const projectSnapshot = await getDoc(projectRef);
+    const projectData = projectSnapshot.data();
 
     if (!projectSnapshot.exists()) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
-    const projectData = projectSnapshot.data();
-    const currentSpent = projectData.spent || 0;
+    data.projectName = projectData?.name || "";
+    const paymentRef = await addDoc(collection(db, "payments"), data);
+
+    // Fetch the project
+    // const projectRef = doc(db, "projects", data.projectId);
+    // const projectSnapshot = await getDoc(projectRef);
+
+   
+    const currentSpent = projectData?.spent || 0;
     const updatedSpent = currentSpent + data.amount;
 
     // Initialize paymentSummary if not present
-    const currentSummary = projectData.paymentSummary || {
+    const currentSummary = projectData?.paymentSummary || {
       totalIncome: 0,
       totalExpenses: {
         clientExpense: 0,
