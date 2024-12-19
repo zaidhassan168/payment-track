@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addStakeholder } from "@/app/services/projects";
 import { Stakeholder } from "@/types";
+import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
 
 export default function AddStakeholderModal({ projectId, onStakeholderAddedAction }: { projectId: string; onStakeholderAddedAction: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,12 +29,12 @@ export default function AddStakeholderModal({ projectId, onStakeholderAddedActio
 
     try {
       await addStakeholder(projectId, stakeholder);
-      alert("Stakeholder added successfully!");
+      showSuccessToast("Stakeholder added successfully");
       onStakeholderAddedAction();
       setIsOpen(false);
     } catch (error) {
       console.error("Error adding stakeholder:", error);
-      alert("An error occurred.");
+      showErrorToast("Failed to add stakeholder");
     } finally {
       setLoading(false);
     }

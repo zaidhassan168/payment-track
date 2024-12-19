@@ -50,7 +50,7 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
     e.preventDefault()
     const { name, budget, client, deadline } = formData
 
-    if (!name || !budget || !client || !deadline) {
+    if (!name || !budget || !client ) {
       alert("All fields are required!")
       return
     }
@@ -59,7 +59,7 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
 
     try {
       const projectData: Project & { stakeholders: Stakeholder[] } = {
-        projectId: project?.projectId || '',
+        id: project?.id || '',
         name,
         budget: Number(budget),
         client,
@@ -70,6 +70,7 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
       }
 
       if (project?.id) {
+        console.log("Updating project:", projectData)
         await updateProject(project.id, projectData)
       } else {
         await createProject(projectData)
@@ -130,7 +131,7 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
                 className="col-span-3"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            {/* <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="deadline" className="text-right">
                 Deadline
               </Label>
@@ -142,7 +143,7 @@ export default function ProjectModal({ isOpen, onClose, onSuccess, project }: Pr
                 onChange={handleChange}
                 className="col-span-3"
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="space-y-4">
