@@ -20,15 +20,14 @@ const navigation = [
 ];
 
 interface SidebarProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (collapsed: boolean) => void;
+  readonly isCollapsed: boolean;
+  readonly setIsCollapsed: (collapsed: boolean) => void;
 }
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useUser();
-  // const [searchQuery, setSearchQuery] = useState(""); // Removed
 
   useEffect(() => {
     const checkScreenSize = () => {
