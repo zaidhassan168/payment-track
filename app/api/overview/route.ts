@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where, orderBy, limit } from "firebase/firestore";
 
 export async function GET() {
   try {
@@ -28,13 +28,30 @@ export async function GET() {
       ...doc.data(),
     }));
 
+    // Fetch last 10 days of transfer data
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+    const transfersQuery = query(
+      collection(db, "overview"),
+      where("date", ">=", tenDaysAgo.toISOString().split("T")[0]),
+      orderBy("date", "desc"),
+      limit(10)
+    );
+    const transfersSnapshot = await getDocs(transfersQuery);
+    const last10DaysTransfers = transfersSnapshot.docs.map(doc => ({
+      date: doc.id,
+      amount: doc.data().totalTransferredToday || 0
+    })).reverse();
+
     return NextResponse.json({
       totalToday,
       totalMonth,
       projects,
+      last10DaysTransfers
     });
   } catch (error) {
     console.error("Error fetching overview metrics:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
+
