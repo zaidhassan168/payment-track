@@ -7,29 +7,21 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { LayoutDashboard, CreditCard, FolderKanban, Settings, ChevronLeft, ChevronRight, Menu, HelpCircle } from 'lucide-react';
-import { UserButton } from "@clerk/nextjs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserButton, useUser } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { useUser } from "@clerk/nextjs";
-import { colors } from "@/styles/colors";
-
+// import { Input } from "@/components/ui/input"; // Removed
 const navigation = [
-  { name: "Overview", href: "/dashboard", icon: LayoutDashboard, color: colors.primary },
-  { name: "Payments", href: "/dashboard/payments", icon: CreditCard, color: colors.accent },
-  { name: "Projects", href: "/dashboard/projects", icon: FolderKanban, color: colors.secondary },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings, color: colors.info },
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
+  { name: "Projects", href: "/dashboard/projects", icon: FolderKanban },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 interface SidebarProps {
-  isCollapsed: boolean;
-  setIsCollapsed: (collapsed: boolean) => void;
+  readonly isCollapsed: boolean;
+  readonly setIsCollapsed: (collapsed: boolean) => void;
 }
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
@@ -45,11 +37,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
-
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [setIsCollapsed]);
-
-  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   return (
     <>
@@ -57,63 +46,33 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         variant="outline"
         size="icon"
         className="fixed top-4 left-4 z-50 md:hidden"
-        onClick={toggleSidebar}
+        onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <Menu className="h-4 w-4" />
       </Button>
       <motion.aside
-        initial={isMobile ? { x: "-100%" } : { width: isCollapsed ? 64 : 256 }}
-        animate={
-          isMobile
-            ? { x: isCollapsed ? "-100%" : 0 }
-            : { width: isCollapsed ? 64 : 256 }
-        }
-        transition={{ duration: 0.3, ease: "easeInOut" }}
+        initial={false}
+        animate={{
+          width: isCollapsed ? 80 : 280,
+          transition: { duration: 0.2 }
+        }}
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen bg-background",
-          isCollapsed ? "w-16" : "w-64"
+          "fixed left-0 top-0 z-40 h-screen border-r border-border bg-background",
+          isCollapsed ? "w-20" : "w-[280px]"
         )}
       >
-        <div className="flex h-full flex-col border-r border-border">
-          <div className="flex h-14 items-center justify-between px-3 py-4 bg-gradient-to-r from-primary/10 to-secondary/10">
-            {!isCollapsed && (
-              <h2 className="text-lg font-semibold text-primary">Dashboard</h2>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("hover:bg-secondary/20", isCollapsed && "ml-auto")}
-              onClick={toggleSidebar}
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-primary" />
-              ) : (
-                <ChevronLeft className="h-4 w-4 text-primary" />
-              )}
-            </Button>
+        <div className="flex h-full flex-col">
+          {/* Logo & Brand */}
+          <div className="flex h-16 items-center gap-2 border-b border-border px-4">
+            <div className="flex items-center gap-2 font-semibold">
+              🍊
+              {!isCollapsed && <span className="text-lg text-primary">GridLine</span>}
+            </div>
           </div>
-          <div className="flex items-center px-3 py-4 bg-gradient-to-r from-accent/5 to-info/5">
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  userButtonAvatarBox: isCollapsed ? "w-8 h-8" : "w-10 h-10",
-                },
-              }}
-            />
-            {!isCollapsed && (
-              <div className="ml-3">
-                <p className="text-sm font-medium text-primary">
-                  {user?.fullName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {user?.primaryEmailAddress?.toString()}
-                </p>
-              </div>
-            )}
-          </div>
-          <ScrollArea className="flex-1 px-3 py-2">
-            <nav className="space-y-1">
+
+          {/* Navigation */}
+          <ScrollArea className="flex-1 px-3">
+            <nav className="flex flex-col gap-1 py-2">
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -122,84 +81,102 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                       <TooltipTrigger asChild>
                         <Button
                           asChild
-                          variant={isActive ? "secondary" : "ghost"}
+                          variant="ghost"
                           className={cn(
-                            "w-full justify-start transition-colors",
-                            isActive && "bg-secondary/20 text-secondary-foreground",
-                            isCollapsed && "px-2",
-                            "hover:bg-secondary/10"
+                            "w-full justify-start gap-2",
+                            isActive && "bg-accent text-accent-foreground",
+                            !isCollapsed && "px-2",
                           )}
                         >
-                          <Link href={item.href}>
-                            <item.icon
-                              className={cn(
-                                "h-5 w-5",
-                                !isCollapsed && "mr-2",
-                                "transition-transform duration-200 ease-in-out",
-                                "hover:scale-110"
-                              )}
-                              style={{ 
-                                stroke: isActive ? item.color : colors.mutedForeground,
-                                fill: "none",
-                                strokeWidth: 1.5
-                              }}
-                            />
-                            {!isCollapsed && <span>{item.name}</span>}
-                            {item.name === "Payments" && !isCollapsed && (
-                              <Badge variant="secondary" className="ml-auto">
-                                New
-                              </Badge>
+                          <Link href={item.href} className="flex items-center gap-2">
+                            <item.icon className={cn(
+                              "h-4 w-4",
+                              isActive ? "text-primary" : "text-muted-foreground"
+                            )} />
+                            {!isCollapsed && (
+                                <span className={cn(
+                                  "flex-1",
+                                  isActive && "font-medium"
+                                )}>{item.name}</span>
                             )}
                           </Link>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="right" className="z-50">
-                        {item.name}
-                      </TooltipContent>
+                      {isCollapsed && (
+                        <TooltipContent side="right" className="flex items-center gap-4">
+                          {item.name}
+                          {item.name === "Payments" && (
+                            <Badge variant="secondary">New</Badge>
+                          )}
+                        </TooltipContent>
+                      )}
                     </Tooltip>
                   </TooltipProvider>
                 );
               })}
             </nav>
           </ScrollArea>
-          <div className="mt-auto px-3 py-4 bg-gradient-to-r from-muted/20 to-background">
-            <Separator className="my-2" />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-secondary/10"
-                    asChild
-                  >
-                    <Link href="/help">
-                      <HelpCircle
-                        className={cn(
-                          "h-5 w-5",
-                          !isCollapsed && "mr-2",
-                          "transition-transform duration-200 ease-in-out",
-                          "hover:scale-110"
-                        )}
-                        style={{ 
-                          stroke: colors.warning,
-                          fill: "none",
-                          strokeWidth: 1.5
-                        }}
-                      />
-                      {!isCollapsed && <span>Help & Support</span>}
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="z-50">
-                  Help & Support
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {!isCollapsed && (
-              <p className="mt-2 text-xs text-muted-foreground text-center">
-                Version 1.0.0
-              </p>
-            )}
+
+          {/* User & Help */}
+          <div className="border-t border-border p-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "w-8 h-8",
+                    },
+                  }}
+                />
+                {!isCollapsed && (
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{user?.fullName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {user?.primaryEmailAddress?.toString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2"
+                      asChild
+                    >
+                      <Link href="/help">
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        {!isCollapsed && <span>Help & Support</span>}
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && (
+                    <TooltipContent side="right">
+                      Help & Support
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+          {/* Collapsible Button */}
+          <div className="p-4 border-t border-border">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <>
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  <span>Collapse</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </motion.aside>
