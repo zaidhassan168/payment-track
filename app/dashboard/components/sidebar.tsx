@@ -122,7 +122,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <UserButton
-                  afterSignOutUrl="/"
+                  
                   appearance={{
                     elements: {
                       userButtonAvatarBox: "w-8 h-8",
