@@ -9,7 +9,6 @@ import {
   PointElement,
   LineElement,
   Title,
-  Tooltip,
   Legend,
   BarElement,
   Filler,
@@ -28,6 +27,15 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer
+} from 'recharts';
 
 ChartJS.register(
   CategoryScale,
@@ -35,7 +43,6 @@ ChartJS.register(
   PointElement,
   LineElement,
   Title,
-  Tooltip,
   Legend,
   BarElement,
   Filler
@@ -86,45 +93,74 @@ export default function DashboardPage() {
 
     fetchMetrics();
   }, []);
+  const renderAreaChart = (data: { date: string; amount: number }[]) => (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart
+        data={data}
+        margin={{
+          top: 10,
+          right: 10,
+          left: 0,
+          bottom: 0,
+        }}
+      >
+        <CartesianGrid 
+          strokeDasharray="3 3" 
+          vertical={false}
+          stroke="hsl(var(--border) / 0.2)"
+        />
+        <XAxis 
+          dataKey="date"
+          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tickLine={{ stroke: 'hsl(var(--border))' }}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+        />
+        <YAxis
+          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tickLine={{ stroke: 'hsl(var(--border))' }}
+          axisLine={{ stroke: 'hsl(var(--border))' }}
+          tickFormatter={(value) => `Rs ${value.toLocaleString('en-PK')}`}
+        />
+        <Tooltip
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              return (
+                <div className="rounded-lg border bg-background p-2 shadow-sm">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Date
+                      </span>
+                      <span className="text-sm font-bold">
+                        {label}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Amount
+                      </span>
+                      <span className="text-sm font-bold">
+                        Rs {payload[0]?.value?.toLocaleString('en-PK')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            return null
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="amount"
+          stroke="hsl(var(--primary))"
+          fill="hsl(var(--primary) / 0.2)"
+          strokeWidth={2}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
 
-  const chartData = metrics?.last10DaysTransfers
-    ? {
-        labels: metrics.last10DaysTransfers.map((d) => d.date),
-        datasets: [
-          {
-            label: "Daily Transfers",
-            data: metrics.last10DaysTransfers.map((d) => d.amount),
-            borderColor: "hsl(var(--primary))",
-            backgroundColor: "hsl(var(--primary) / 0.1)",
-            tension: 0.4,
-            fill: true,
-          },
-        ],
-      }
-    : null;
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: "hsl(var(--border) / 0.2)",
-        },
-      },
-    },
-  };
 
   const calculateTotalBudget = (projects: Project[]) => {
     return projects.reduce((total, project) => total + project.budget, 0);
@@ -141,7 +177,7 @@ export default function DashboardPage() {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="flex h-[200px] items-center justify-center">
+        <div className="flex h-[400px] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       );
@@ -149,16 +185,16 @@ export default function DashboardPage() {
 
     if (!metrics) {
       return (
-        <div className="flex h-[200px] items-center justify-center">
+        <div className="flex h-[400px] items-center justify-center">
           <p className="text-muted-foreground">No data available</p>
         </div>
       );
     }
 
     return (
-      <>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Today's Transfers
@@ -169,12 +205,12 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">
                 Rs {new Intl.NumberFormat("en-PK").format(metrics.totalToday)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 +{((metrics.totalToday / metrics.totalMonth) * 100).toFixed(2)}% of monthly total
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Monthly Transfers
@@ -185,12 +221,12 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">
                 Rs {new Intl.NumberFormat("en-PK").format(metrics.totalMonth)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 For {new Date().toLocaleString('default', { month: 'long' })}
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Projects
@@ -199,12 +235,12 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metrics.projects.length}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 Total Budget: Rs {new Intl.NumberFormat("en-PK").format(calculateTotalBudget(metrics.projects))}
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Spent
@@ -215,24 +251,26 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold">
                 Rs {new Intl.NumberFormat("en-PK").format(calculateTotalSpent(metrics.projects))}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-1">
                 Balance: Rs {new Intl.NumberFormat("en-PK").format(calculateTotalBalance(metrics.projects))}
               </p>
             </CardContent>
           </Card>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+          <Card className="col-span-4 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Last 10 Days Transfers</CardTitle>
             </CardHeader>
-            <CardContent className="pl-2">
-              <div className="h-[300px]">
-                {chartData && <Line data={chartData} options={chartOptions} />}
+            <CardContent>
+              <div className="h-[350px] p-4">
+              {renderAreaChart(metrics.last10DaysTransfers)}
               </div>
             </CardContent>
           </Card>
-          <Card className="col-span-3">
+
+          <Card className="col-span-3 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
               <CardDescription>
@@ -240,22 +278,26 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {metrics.projects.slice(0, 5).map((project) => (
                   <div className="flex items-center" key={project.id}>
-                    <Avatar className="h-9 w-9">
-                      <AvatarFallback>{project.name[0]}</AvatarFallback>
+                    <Avatar className="h-10 w-10 border-2 border-background">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {project.name[0]}
+                      </AvatarFallback>
                     </Avatar>
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">{project.name}</p>
+                    <div className="ml-4 space-y-1 flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-none truncate">
+                        {project.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        Client: {project.client}
+                        {project.client}
                       </p>
                     </div>
-                    <div className="ml-auto font-medium">
+                    <div className="ml-4 w-20">
                       <Progress
                         value={(project.spent / project.budget) * 100}
-                        className="h-2 w-[60px]"
+                        className="h-2"
                       />
                     </div>
                   </div>
@@ -264,8 +306,9 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+          <Card className="col-span-4 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Top Clients</CardTitle>
               <CardDescription>
@@ -273,28 +316,32 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {metrics.projects
                   .toSorted((a, b) => b.budget - a.budget)
                   .slice(0, 5)
                   .map((project) => (
                     <div className="flex items-center" key={project.id}>
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback>{project.client[0]}</AvatarFallback>
+                      <Avatar className="h-10 w-10 border-2 border-background">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {project.client[0]}
+                        </AvatarFallback>
                       </Avatar>
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">{project.client}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Project: {project.name}
+                      <div className="ml-4 space-y-1 flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-none truncate">
+                          {project.client}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {project.name}
                         </p>
                       </div>
-                      <div className="ml-auto font-medium">
+                      <div className="ml-4 font-medium whitespace-nowrap">
                         <div className="flex items-center">
                           Rs {new Intl.NumberFormat("en-PK").format(project.budget)}
                           {project.spent > project.budget ? (
-                            <ArrowUpRight className="ml-1 h-4 w-4 text-red-500" />
+                            <ArrowUpRight className="ml-1 h-4 w-4 text-destructive" />
                           ) : (
-                            <ArrowDownRight className="ml-1 h-4 w-4 text-green-500" />
+                            <ArrowDownRight className="ml-1 h-4 w-4 text-primary" />
                           )}
                         </div>
                       </div>
@@ -303,7 +350,8 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="col-span-3">
+
+          <Card className="col-span-3 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Recent Transfers</CardTitle>
               <CardDescription>
@@ -311,11 +359,16 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {metrics.last10DaysTransfers.slice(-5).map((transfer) => (
                   <div className="flex items-center justify-between" key={transfer.date}>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">Transfer on {transfer.date}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {new Date(transfer.date).toLocaleDateString('en-US', { 
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(transfer.date).toLocaleDateString('en-US', { weekday: 'long' })}
                       </p>
@@ -329,20 +382,22 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </>
+      </div>
     );
   };
 
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          <Button>Download Report</Button>
+          <Button>
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Download Report
+          </Button>
         </div>
       </div>
       {renderContent()}
     </div>
   );
 }
-

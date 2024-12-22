@@ -66,7 +66,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           <div className="flex h-16 items-center gap-2 border-b border-border px-4">
             <div className="flex items-center gap-2 font-semibold">
               🍊
-              {!isCollapsed && <span className="text-lg text-primary">OrangeFarm</span>}
+              {!isCollapsed && <span className="text-lg text-primary">GridLine</span>}
             </div>
           </div>
 
@@ -94,17 +94,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                               isActive ? "text-primary" : "text-muted-foreground"
                             )} />
                             {!isCollapsed && (
-                              <>
                                 <span className={cn(
                                   "flex-1",
                                   isActive && "font-medium"
                                 )}>{item.name}</span>
-                                {item.name === "Payments" && (
-                                  <Badge variant="secondary" className="ml-auto">
-                                    New
-                                  </Badge>
-                                )}
-                              </>
                             )}
                           </Link>
                         </Button>
