@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { UserButton, useUser, SignOutButton } from "@clerk/nextjs";
+import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { UserButton, useUser, SignOutButton,  } from "@clerk/nextjs";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 // import { Input } from "@/components/ui/input"; // Removed
@@ -142,8 +142,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               </div>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start">
-                    Sign Out
+                  <Button variant="ghost" className={cn("w-full justify-start", "bg-red-100")}>
+                    <LogOut className="h-4 w-4 text-red-500" />
+                    {!isCollapsed && <span>Sign Out</span>}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -157,7 +158,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                     <DialogClose asChild>
                       <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <SignOutButton signOutOptions={{ redirectUrl: '/' }}>
+                    <SignOutButton signOutOptions={{ redirectUrl: '/sign-in' }}>
                       <Button variant="destructive">Sign Out</Button>
                     </SignOutButton>
                   </DialogFooter>
