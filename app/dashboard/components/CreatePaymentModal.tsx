@@ -123,20 +123,20 @@ export default function CreatePaymentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] bg-white shadow-lg rounded-lg">
         <DialogHeader>
-          <DialogTitle>Create Payment</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-semibold text-gray-800">Create Payment</DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
             Add a new payment to your project. Fill in the details below.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-6 py-6">
 
             {/* Date Field */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="date" className="text-right">Date</Label>
+            <div className="grid grid-cols-4 items-center gap-4 bg-secondary p-2 rounded-md">
+              <Label htmlFor="date" className="text-right font-medium text-gray-700">Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -162,8 +162,8 @@ export default function CreatePaymentModal({
             </div>
 
             {/* Description */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">Description</Label>
+            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
+              <Label htmlFor="description" className="text-right font-medium text-gray-700">Description</Label>
               <Textarea
                 id="description"
                 className="col-span-3"
@@ -173,8 +173,8 @@ export default function CreatePaymentModal({
             </div>
 
             {/* Stakeholder Selection */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="stakeholder" className="text-right">Stakeholder</Label>
+            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
+              <Label htmlFor="stakeholder" className="text-right font-medium text-gray-700">Stakeholder</Label>
               <Select
                 onValueChange={(value) => {
                   console.log("Selected stakeholder ID:", value);
@@ -202,21 +202,8 @@ export default function CreatePaymentModal({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Item */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="item" className="text-right">Item</Label>
-              <Input
-                id="item"
-                className="col-span-3"
-                value={formData.item || ""}
-                onChange={(e) => handleChange("item", e.target.value)}
-              />
-            </div>
-
-            {/* Category */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="category" className="text-right">Category</Label>
+            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
+              <Label htmlFor="category" className="text-right font-medium text-gray-700">Category</Label>
               <Select
                 onValueChange={(value) => handleChange("category", value)}
                 value={formData.category || ""}
@@ -234,9 +221,16 @@ export default function CreatePaymentModal({
               </Select>
             </div>
 
-            {/* Amount */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">Amount</Label>
+            {/* Item and Amount */}
+            <div className="grid grid-cols-8 items-center gap-4 bg-secondary p-2 rounded-md">
+              <Label htmlFor="item" className="text-right font-medium text-gray-700 col-span-1">Item</Label>
+              <Input
+                id="item"
+                className="col-span-3"
+                value={formData.item || ""}
+                onChange={(e) => handleChange("item", e.target.value)}
+              />
+              <Label htmlFor="amount" className="text-right font-medium text-gray-700 col-span-1">Amount</Label>
               <Input
                 id="amount"
                 type="number"
@@ -246,20 +240,19 @@ export default function CreatePaymentModal({
               />
             </div>
 
-            {/* Sent To */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="sentTo" className="text-right">Sent To</Label>
+            {/* Category */}
+            
+
+            {/* Sent To and From */}
+            <div className="grid grid-cols-8 items-center gap-4 bg-gray-50 p-2 rounded-md">
+              <Label htmlFor="sentTo" className="text-right font-medium text-gray-700 col-span-1">Sent To</Label>
               <Input
                 id="sentTo"
                 className="col-span-3"
                 value={formData.sentTo || ""}
                 onChange={(e) => handleChange("sentTo", e.target.value)}
               />
-            </div>
-
-            {/* From */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="from" className="text-right">From</Label>
+              <Label htmlFor="from" className="text-right font-medium text-gray-700 col-span-1">From</Label>
               <Input
                 id="from"
                 className="col-span-3"
@@ -269,8 +262,8 @@ export default function CreatePaymentModal({
             </div>
 
             {/* Screenshot */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="screenshot" className="text-right">Screenshot</Label>
+            <div className="grid grid-cols-4 items-center gap-4 bg-secondary p-2 rounded-md">
+              <Label htmlFor="screenshot" className="text-right font-medium text-gray-700">Screenshot</Label>
               <Input
                 id="screenshot"
                 type="file"
@@ -280,9 +273,9 @@ export default function CreatePaymentModal({
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-primary text-white hover:bg-primary-dark">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {loading ? "Submitting..." : "Submit"}
+              {loading ? "Submitting..." : "Create Payment"}
             </Button>
           </DialogFooter>
         </form>

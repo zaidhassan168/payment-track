@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser, SignOutButton } from "@clerk/nextjs";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 // import { Input } from "@/components/ui/input"; // Removed
 const navigation = [
@@ -28,6 +29,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useUser();
+  const [showSignOut, setShowSignOut] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -138,6 +140,29 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                   </div>
                 )}
               </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-start">
+                    Sign Out
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm Sign Out</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to log out?
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <SignOutButton signOutOptions={{ redirectUrl: '/' }}>
+                      <Button variant="destructive">Sign Out</Button>
+                    </SignOutButton>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -183,4 +208,3 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     </>
   );
 }
-
