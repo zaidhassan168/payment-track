@@ -2,18 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getOverviewMetrics } from "@/app/services/overview";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Legend,
-  BarElement,
-  Filler,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,55 +12,11 @@ import {
 } from "@/components/ui/card";
 import { Loader2, TrendingUp, Briefcase, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer
-} from 'recharts';
+import { ProjectTransfersAreaChart } from "./components/ProjectTransfersAreaChart";
+import { Project, Metrics, DayTransfer, ProjectTransfer } from "@/types";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Legend,
-  BarElement,
-  Filler
-);
-
-interface Project {
-  id: string;
-  name: string;
-  client: string;
-  budget: number;
-  spent: number;
-  paymentTransferred: number;
-  paymentSummary: {
-    totalExpenses: {
-      deduction: number;
-      extraExpense: number;
-      clientExpense: number;
-      projectExpense: number;
-    };
-    balance: number;
-    totalIncome: number;
-  };
-}
-
-interface Metrics {
-  totalToday: number;
-  totalMonth: number;
-  projects: Project[];
-  last10DaysTransfers: { date: string; amount: number }[];
-}
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -83,6 +27,7 @@ export default function DashboardPage() {
     const fetchMetrics = async () => {
       try {
         const data = await getOverviewMetrics();
+        console.log("Overview metrics:", data);
         setMetrics(data);
       } catch (error) {
         console.error("Error fetching overview metrics:", error);
@@ -93,74 +38,6 @@ export default function DashboardPage() {
 
     fetchMetrics();
   }, []);
-  const renderAreaChart = (data: { date: string; amount: number }[]) => (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart
-        data={data}
-        margin={{
-          top: 10,
-          right: 10,
-          left: 0,
-          bottom: 0,
-        }}
-      >
-        <CartesianGrid 
-          strokeDasharray="3 3" 
-          vertical={false}
-          stroke="hsl(var(--border) / 0.2)"
-        />
-        <XAxis 
-          dataKey="date"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={{ stroke: 'hsl(var(--border))' }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-        />
-        <YAxis
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={{ stroke: 'hsl(var(--border))' }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-          tickFormatter={(value) => `Rs ${value.toLocaleString('en-PK')}`}
-        />
-        <Tooltip
-          content={({ active, payload, label }) => {
-            if (active && payload && payload.length) {
-              return (
-                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Date
-                      </span>
-                      <span className="text-sm font-bold">
-                        {label}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Amount
-                      </span>
-                      <span className="text-sm font-bold">
-                        Rs {payload[0]?.value?.toLocaleString('en-PK')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            }
-            return null
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="amount"
-          stroke="hsl(var(--primary))"
-          fill="hsl(var(--primary) / 0.2)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-
 
   const calculateTotalBudget = (projects: Project[]) => {
     return projects.reduce((total, project) => total + project.budget, 0);
@@ -171,7 +48,7 @@ export default function DashboardPage() {
   };
 
   const calculateTotalBalance = (projects: Project[]) => {
-    return projects.reduce((total, project) => total + project.paymentSummary.balance, 0);
+    return projects.reduce((total, project) => total + (project.paymentSummary?.balance ?? 0), 0);
   };
 
   const renderContent = () => {
@@ -259,17 +136,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4 hover:shadow-md transition-shadow">
-            <CardHeader>
-              <CardTitle>Last 10 Days Transfers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px] p-4">
-              {renderAreaChart(metrics.last10DaysTransfers)}
-              </div>
-            </CardContent>
-          </Card>
-
+        <Card className="col-span-4 hover:shadow-md transition-shadow">
+  <CardHeader>
+    <CardTitle>Project Transfers</CardTitle>
+    <CardDescription>
+      Transfer trends across all projects
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="h-[350px]">
+    <ProjectTransfersAreaChart data={metrics.last10DaysTransfers} />
+  </CardContent>
+</Card>
           <Card className="col-span-3 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
@@ -364,7 +241,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between" key={transfer.date}>
                     <div className="space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {new Date(transfer.date).toLocaleDateString('en-US', { 
+                        {new Date(transfer.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric'
                         })}
@@ -374,7 +251,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="font-medium">
-                      Rs {new Intl.NumberFormat("en-PK").format(transfer.amount)}
+                      Rs {new Intl.NumberFormat("en-PK").format(transfer.totalAmount)}
                     </div>
                   </div>
                 ))}
