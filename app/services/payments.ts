@@ -72,3 +72,17 @@ export async function updatePayment(id: string, paymentData: Payment){
     return response.json();
   }
   
+
+
+  export const getRecentPayments = async (): Promise<Payment[]> => {
+    try {
+      const res = await fetch("/api/payments/recent");
+      if (!res.ok) {
+        throw new Error("Failed to fetch recent payments");
+      }
+      return await res.json();
+    } catch (error: any) {
+      console.error("Error fetching recent payments:", error);
+      throw error;
+    }
+  };

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getOverviewMetrics } from "@/app/services/overview";
+import { getRecentPayments } from "@/app/services/payments";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,28 +16,49 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ProjectTransfersAreaChart } from "./components/ProjectTransfersAreaChart";
-import { Project, Metrics, DayTransfer, ProjectTransfer } from "@/types";
-
+import { RenderPaymentsContent } from "./components/RenderPaymentsContent";
+import { Project, Metrics, DayTransfer, ProjectTransfer, Payment } from "@/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchDashboardData = async () => {
+      setLoadingOverview(true);
       try {
-        const data = await getOverviewMetrics();
-        console.log("Overview metrics:", data);
-        setMetrics(data);
+        const metricsData = await getOverviewMetrics();
+        console.log("Overview metrics:", metricsData);
+        setMetrics(metricsData);
       } catch (error) {
         console.error("Error fetching overview metrics:", error);
       } finally {
-        setLoading(false);
+        setLoadingOverview(false);
       }
     };
 
-    fetchMetrics();
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    const fetchPaymentsData = async () => {
+      setLoadingPayments(true);
+      try {
+        const paymentsData = await getRecentPayments();
+        console.log("Recent payments:", paymentsData);
+        setRecentPayments(paymentsData);
+      } catch (error) {
+        console.error("Error fetching recent payments:", error);
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+
+    fetchPaymentsData();
   }, []);
 
   const calculateTotalBudget = (projects: Project[]) => {
@@ -52,7 +74,7 @@ export default function DashboardPage() {
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (loadingOverview) {
       return (
         <div className="flex h-[400px] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -136,17 +158,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 hover:shadow-md transition-shadow">
-  <CardHeader>
-    <CardTitle>Project Transfers</CardTitle>
-    <CardDescription>
-      Transfer trends across all projects
-    </CardDescription>
-  </CardHeader>
-  <CardContent className="h-[350px]">
-    <ProjectTransfersAreaChart data={metrics.last10DaysTransfers} />
-  </CardContent>
-</Card>
+          <Card className="col-span-4 hover:shadow-md transition-shadow">
+            <CardHeader>
+              <CardTitle>Project Transfers</CardTitle>
+              <CardDescription>
+                Transfer trends across all projects
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-[350px]">
+              <ProjectTransfersAreaChart data={metrics.last10DaysTransfers} />
+            </CardContent>
+          </Card>
           <Card className="col-span-3 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
@@ -185,84 +207,52 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4 hover:shadow-md transition-shadow">
+          <Card className="col-span-4 hover:shadow-md transition-shadow h-[400px]">
             <CardHeader>
-              <CardTitle>Top Clients</CardTitle>
-              <CardDescription>
-                Your top 5 clients by project budget
-              </CardDescription>
+              <CardTitle>Recent Payments</CardTitle>
+              <CardDescription>Your most recent payment activities</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {metrics.projects
-                  .toSorted((a, b) => b.budget - a.budget)
-                  .slice(0, 5)
-                  .map((project) => (
-                    <div className="flex items-center" key={project.id}>
-                      <Avatar className="h-10 w-10 border-2 border-background">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {project.client[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4 space-y-1 flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-none truncate">
-                          {project.client}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {project.name}
-                        </p>
-                      </div>
-                      <div className="ml-4 font-medium whitespace-nowrap">
-                        <div className="flex items-center">
-                          Rs {new Intl.NumberFormat("en-PK").format(project.budget)}
-                          {project.spent > project.budget ? (
-                            <ArrowUpRight className="ml-1 h-4 w-4 text-destructive" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-4 w-4 text-primary" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
+            <CardContent className="overflow-hidden">
+              <RenderPaymentsContent loadingPayments={loadingPayments} recentPayments={recentPayments} />
             </CardContent>
           </Card>
 
-          <Card className="col-span-3 hover:shadow-md transition-shadow">
+          <Card className="col-span-3 hover:shadow-md transition-shadow h-[400px]">
             <CardHeader>
               <CardTitle>Recent Transfers</CardTitle>
               <CardDescription>
                 Your most recent transfer activities
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {metrics.last10DaysTransfers.slice(-5).map((transfer) => (
-                  <div className="flex items-center justify-between" key={transfer.date}>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {new Date(transfer.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(transfer.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                      </p>
+            <CardContent className="overflow-hidden">
+              <ScrollArea className="h-[300px] w-full">
+                <div className="space-y-6">
+                  {metrics.last10DaysTransfers.slice(-5).map((transfer) => (
+                    <div className="flex items-center justify-between" key={transfer.date}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {new Date(transfer.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transfer.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                        </p>
+                      </div>
+                      <div className="font-medium">
+                        Rs {new Intl.NumberFormat("en-PK").format(transfer.totalAmount)}
+                      </div>
                     </div>
-                    <div className="font-medium">
-                      Rs {new Intl.NumberFormat("en-PK").format(transfer.totalAmount)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
       </div>
     );
   };
-
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between">
