@@ -15,7 +15,6 @@ import { paymentSchema } from "@/lib/schemas/payment";
 import { sendPaymentNotification } from "@/lib/notifications";
 import { Stakeholder, Payment } from "@/types";
 
-
 export async function POST(req: Request) {
   try {
     const json: Payment = await req.json();
@@ -41,7 +40,7 @@ export async function POST(req: Request) {
     await updateProjectDocument(data.projectId, updatedSummary, data.amount);
 
     if (data.date) {
-      await updateOverviewCollection(data.date, data.amount);
+      await updateOverviewCollection(data.date, data.projectId, projectData.name || "", data.amount); // Include projectName
       await updateMonthlyTotal(data.date, data.amount);
     }
 
@@ -128,21 +127,40 @@ async function updateProjectDocument(projectId: string, summary: any, amount: nu
   });
 }
 
-async function updateOverviewCollection(date: string, amount: number) {
+async function updateOverviewCollection(date: string, projectId: string, projectName: string, amount: number) {
   const overviewRef = doc(db, "overview", date);
   const overviewSnapshot = await getDoc(overviewRef);
 
+  const projectKey = projectId; // Use projectId directly as the key
+
   if (overviewSnapshot.exists()) {
+    const overviewData = overviewSnapshot.data();
+    const projectPayments = overviewData[projectKey] || {
+      projectName: projectName, // Add projectName here if it doesn't exist
+      totalTransferredToday: 0,
+      totalPaymentsToday: 0,
+    };
+
     await updateDoc(overviewRef, {
       totalTransferredToday: increment(amount),
       totalPaymentsToday: increment(1),
+      [projectKey]: {
+        projectName: projectName, // Ensure projectName is always updated
+        totalTransferredToday: increment(amount),
+        totalPaymentsToday: increment(1),
+      },
     });
   } else {
     await setDoc(overviewRef, {
       date: date,
       totalTransferredToday: amount,
       totalPaymentsToday: 1,
-      totalTransferredThisMonth: amount,
+      totalTransferredThisMonth: amount, // This might be redundant here, consider removing or adjusting
+      [projectKey]: {
+        projectName: projectName,
+        totalTransferredToday: amount,
+        totalPaymentsToday: 1,
+      },
     });
   }
 }

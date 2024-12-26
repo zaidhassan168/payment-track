@@ -2,18 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getOverviewMetrics } from "@/app/services/overview";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Legend,
-  BarElement,
-  Filler,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
+import { getRecentPayments } from "@/app/services/payments";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,143 +13,53 @@ import {
 } from "@/components/ui/card";
 import { Loader2, TrendingUp, Briefcase, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer
-} from 'recharts';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Legend,
-  BarElement,
-  Filler
-);
-
-interface Project {
-  id: string;
-  name: string;
-  client: string;
-  budget: number;
-  spent: number;
-  paymentTransferred: number;
-  paymentSummary: {
-    totalExpenses: {
-      deduction: number;
-      extraExpense: number;
-      clientExpense: number;
-      projectExpense: number;
-    };
-    balance: number;
-    totalIncome: number;
-  };
-}
-
-interface Metrics {
-  totalToday: number;
-  totalMonth: number;
-  projects: Project[];
-  last10DaysTransfers: { date: string; amount: number }[];
-}
+import { ProjectTransfersAreaChart } from "./components/ProjectTransfersAreaChart";
+import { RenderPaymentsContent } from "./components/RenderPaymentsContent";
+import { Project, Metrics, DayTransfer, ProjectTransfer, Payment } from "@/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchDashboardData = async () => {
+      setLoadingOverview(true);
       try {
-        const data = await getOverviewMetrics();
-        setMetrics(data);
+        const metricsData = await getOverviewMetrics();
+        console.log("Overview metrics:", metricsData);
+        setMetrics(metricsData);
       } catch (error) {
         console.error("Error fetching overview metrics:", error);
       } finally {
-        setLoading(false);
+        setLoadingOverview(false);
       }
     };
 
-    fetchMetrics();
+    fetchDashboardData();
   }, []);
-  const renderAreaChart = (data: { date: string; amount: number }[]) => (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart
-        data={data}
-        margin={{
-          top: 10,
-          right: 10,
-          left: 0,
-          bottom: 0,
-        }}
-      >
-        <CartesianGrid 
-          strokeDasharray="3 3" 
-          vertical={false}
-          stroke="hsl(var(--border) / 0.2)"
-        />
-        <XAxis 
-          dataKey="date"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={{ stroke: 'hsl(var(--border))' }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-        />
-        <YAxis
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={{ stroke: 'hsl(var(--border))' }}
-          axisLine={{ stroke: 'hsl(var(--border))' }}
-          tickFormatter={(value) => `Rs ${value.toLocaleString('en-PK')}`}
-        />
-        <Tooltip
-          content={({ active, payload, label }) => {
-            if (active && payload && payload.length) {
-              return (
-                <div className="rounded-lg border bg-background p-2 shadow-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Date
-                      </span>
-                      <span className="text-sm font-bold">
-                        {label}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Amount
-                      </span>
-                      <span className="text-sm font-bold">
-                        Rs {payload[0]?.value?.toLocaleString('en-PK')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            }
-            return null
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="amount"
-          stroke="hsl(var(--primary))"
-          fill="hsl(var(--primary) / 0.2)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
 
+  useEffect(() => {
+    const fetchPaymentsData = async () => {
+      setLoadingPayments(true);
+      try {
+        const paymentsData = await getRecentPayments();
+        console.log("Recent payments:", paymentsData);
+        setRecentPayments(paymentsData);
+      } catch (error) {
+        console.error("Error fetching recent payments:", error);
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+
+    fetchPaymentsData();
+  }, []);
 
   const calculateTotalBudget = (projects: Project[]) => {
     return projects.reduce((total, project) => total + project.budget, 0);
@@ -171,11 +70,11 @@ export default function DashboardPage() {
   };
 
   const calculateTotalBalance = (projects: Project[]) => {
-    return projects.reduce((total, project) => total + project.paymentSummary.balance, 0);
+    return projects.reduce((total, project) => total + (project.paymentSummary?.balance ?? 0), 0);
   };
 
   const renderContent = () => {
-    if (loading) {
+    if (loadingOverview) {
       return (
         <div className="flex h-[400px] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -261,15 +160,15 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <Card className="col-span-4 hover:shadow-md transition-shadow">
             <CardHeader>
-              <CardTitle>Last 10 Days Transfers</CardTitle>
+              <CardTitle>Project Transfers</CardTitle>
+              <CardDescription>
+                Transfer trends across all projects
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[350px] p-4">
-              {renderAreaChart(metrics.last10DaysTransfers)}
-              </div>
+            <CardContent className="h-[350px]">
+              <ProjectTransfersAreaChart data={metrics.last10DaysTransfers} />
             </CardContent>
           </Card>
-
           <Card className="col-span-3 hover:shadow-md transition-shadow">
             <CardHeader>
               <CardTitle>Recent Projects</CardTitle>
@@ -308,84 +207,52 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4 hover:shadow-md transition-shadow">
+          <Card className="col-span-4 hover:shadow-md transition-shadow h-[400px]">
             <CardHeader>
-              <CardTitle>Top Clients</CardTitle>
-              <CardDescription>
-                Your top 5 clients by project budget
-              </CardDescription>
+              <CardTitle>Recent Payments</CardTitle>
+              <CardDescription>Your most recent payment activities</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {metrics.projects
-                  .toSorted((a, b) => b.budget - a.budget)
-                  .slice(0, 5)
-                  .map((project) => (
-                    <div className="flex items-center" key={project.id}>
-                      <Avatar className="h-10 w-10 border-2 border-background">
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {project.client[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4 space-y-1 flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-none truncate">
-                          {project.client}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {project.name}
-                        </p>
-                      </div>
-                      <div className="ml-4 font-medium whitespace-nowrap">
-                        <div className="flex items-center">
-                          Rs {new Intl.NumberFormat("en-PK").format(project.budget)}
-                          {project.spent > project.budget ? (
-                            <ArrowUpRight className="ml-1 h-4 w-4 text-destructive" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-4 w-4 text-primary" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
+            <CardContent className="overflow-hidden">
+              <RenderPaymentsContent loadingPayments={loadingPayments} recentPayments={recentPayments} />
             </CardContent>
           </Card>
 
-          <Card className="col-span-3 hover:shadow-md transition-shadow">
+          <Card className="col-span-3 hover:shadow-md transition-shadow h-[400px]">
             <CardHeader>
               <CardTitle>Recent Transfers</CardTitle>
               <CardDescription>
                 Your most recent transfer activities
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {metrics.last10DaysTransfers.slice(-5).map((transfer) => (
-                  <div className="flex items-center justify-between" key={transfer.date}>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {new Date(transfer.date).toLocaleDateString('en-US', { 
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(transfer.date).toLocaleDateString('en-US', { weekday: 'long' })}
-                      </p>
+            <CardContent className="overflow-hidden">
+              <ScrollArea className="h-[300px] w-full">
+                <div className="space-y-6">
+                  {metrics.last10DaysTransfers.slice(-5).map((transfer) => (
+                    <div className="flex items-center justify-between" key={transfer.date}>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {new Date(transfer.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transfer.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                        </p>
+                      </div>
+                      <div className="font-medium">
+                        Rs {new Intl.NumberFormat("en-PK").format(transfer.totalAmount)}
+                      </div>
                     </div>
-                    <div className="font-medium">
-                      Rs {new Intl.NumberFormat("en-PK").format(transfer.amount)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
       </div>
     );
   };
-
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between">

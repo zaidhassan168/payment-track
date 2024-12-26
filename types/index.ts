@@ -62,3 +62,27 @@ export interface Project {
 
   paymentSummary?: PaymentSummary;
 }
+
+
+
+
+
+export interface ProjectTransfer {
+  projectName: string;
+  totalTransferredToday: number;
+}
+
+export interface DayTransfer {
+  date: string;
+  totalAmount: number;
+  projectTransfers: {
+    [key: string]: ProjectTransfer;
+  };
+}
+
+export interface Metrics {
+  totalToday: number;
+  totalMonth: number;
+  projects: Project[];
+  last10DaysTransfers: DayTransfer[];
+}
