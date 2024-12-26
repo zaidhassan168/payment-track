@@ -12,15 +12,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowUpRight, Layout, Users, Zap, Twitter, Facebook, Instagram, Github } from 'lucide-react';
-import { motion } from "framer-motion";
+import { ArrowUpRight, Layout, Users, Zap, Twitter, Facebook, Instagram, Github, Play, ChevronDown } from 'lucide-react';
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
 
 export default function Home() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-background relative overflow-hidden">
+    <main className="min-h-screen background relative overflow-hidden" ref={ref}>
+      {/* Animated Background */}
+      <motion.div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: "url('/abstract-bg.svg')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+          y: backgroundY,
+        }}
+      />
+
       {/* Header */}
       <motion.header 
-        className="py-4 bg-background/10 backdrop-filter backdrop-blur-lg shadow-sm sticky top-0 z-50"
+        className="py-4 bg-background/80 backdrop-filter backdrop-blur-lg shadow-sm sticky top-0 z-50"
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -34,35 +55,26 @@ export default function Home() {
               height={40}
               className="rounded-full"
             />
-            <span className="font-bold text-primary text-xl">
+            <span className="font-bold text-gradient text-xl">
               PayTrack
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="#features"
-              className="text-primary/80 hover:text-primary transition-colors"
-            >
-              Features
-            </Link>
-            <Link
-              href="#pricing"
-              className="text-primary/80 hover:text-primary transition-colors"
-            >
-              Pricing
-            </Link>
+            <NavLink href="#features">Features</NavLink>
+            <NavLink href="#testimonials">Testimonials</NavLink>
+            <NavLink href="#pricing">Pricing</NavLink>
           </nav>
           <div>
             <SignedOut>
               <SignInButton mode="modal">
-                <Button variant="default" size="sm">
+                <Button variant="default" size="sm" className="button-gradient">
                   Sign In
                 </Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
               <Link href="/dashboard">
-                <Button variant="default" size="sm">
+                <Button variant="default" size="sm" className="button-gradient">
                   Dashboard
                 </Button>
               </Link>
@@ -84,10 +96,10 @@ export default function Home() {
             <Badge variant="secondary" className="mb-4">
               Revolutionizing Payment Tracking
             </Badge>
-            <h1 className="text-4xl sm:text-6xl font-extrabold text-primary leading-tight mb-6">
+            <h1 className="text-4xl sm:text-6xl font-extrabold text-gradient leading-tight mb-6 hero-text-shadow">
               Effortless Payment Tracking for Modern Teams
             </h1>
-            <p className="text-xl sm:text-2xl text-primary/80 mb-8">
+            <p className="text-xl sm:text-2xl text-muted-foreground mb-8">
               Centralize project payments, empower stakeholders, and stay ahead
               with automated updates. Experience the future of financial management.
             </p>
@@ -97,7 +109,7 @@ export default function Home() {
                   <Button
                     variant="default"
                     size="lg"
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto button-gradient"
                   >
                     Try Now for Free
                     <ArrowUpRight className="ml-2 h-5 w-5" />
@@ -106,13 +118,14 @@ export default function Home() {
               </SignedOut>
               <SignedIn>
                 <Link href="/dashboard">
-                  <Button variant="default" size="lg" className="w-full sm:w-auto">
+                  <Button variant="default" size="lg" className="w-full sm:w-auto button-gradient">
                     Go to Dashboard
                     <ArrowUpRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
               </SignedIn>
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <Play className="mr-2 h-5 w-5" />
                 Watch Demo
               </Button>
             </div>
@@ -126,20 +139,27 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
           >
             <Image
-              src="/bg.svg"
-              alt="PayTrack Illustration"
+              src="/preview.png"
+              alt="PayTrack Dashboard Preview"
               width={600}
-              height={600}
-              className="w-full h-auto"
+              height={400}
+              className="w-full h-auto rounded-lg shadow-2xl"
             />
           </motion.div>
         </div>
+        <motion.div 
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <ChevronDown className="h-8 w-8 text-primary" />
+        </motion.div>
       </section>
 
       {/* Features Section */}
       <section
         id="features"
-        className="py-20 sm:py-32 bg-background/50 backdrop-filter backdrop-blur-sm"
+        className="py-20 sm:py-32 bg-gradient"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
@@ -148,7 +168,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl sm:text-5xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-5xl font-bold text-gradient mb-4">
               Why Choose PayTrack?
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -176,8 +196,44 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-20 sm:py-32 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div 
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl sm:text-5xl font-bold text-gradient mb-4">
+              What Our Clients Say
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Don't just take our word for it. Here's what our satisfied customers have to say about PayTrack.
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <TestimonialCard
+              quote="PayTrack has revolutionized how we manage project payments. It's a game-changer!"
+              author="Jane Doe"
+              company="Tech Innovators Inc."
+            />
+            <TestimonialCard
+              quote="The real-time notifications have saved us countless hours of back-and-forth communication."
+              author="John Smith"
+              company="Global Solutions Ltd."
+            />
+            <TestimonialCard
+              quote="Intuitive, powerful, and reliable. PayTrack is everything we needed for our payment tracking."
+              author="Emily Johnson"
+              company="Creative Minds Agency"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="py-12 bg-background/50 backdrop-filter backdrop-blur-sm">
+      <footer className="py-12 bg-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
@@ -186,27 +242,27 @@ export default function Home() {
               </p>
             </div>
             <div className="flex space-x-4">
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <span className="sr-only">Twitter</span>
-                <Twitter className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <span className="sr-only">Facebook</span>
-                <Facebook className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <span className="sr-only">Instagram</span>
-                <Instagram className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <span className="sr-only">GitHub</span>
-                <Github className="h-6 w-6" />
-              </Link>
+              <SocialLink href="#" icon={<Twitter className="h-6 w-6" />} label="Twitter" />
+              <SocialLink href="#" icon={<Facebook className="h-6 w-6" />} label="Facebook" />
+              <SocialLink href="#" icon={<Instagram className="h-6 w-6" />} label="Instagram" />
+              <SocialLink href="#" icon={<Github className="h-6 w-6" />} label="GitHub" />
             </div>
           </div>
         </div>
       </footer>
     </main>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="text-foreground/80 hover:text-foreground transition-colors relative group"
+    >
+      {children}
+      <span className="absolute left-0 bottom-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+    </Link>
   );
 }
 
@@ -217,7 +273,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="hover:shadow-lg transition-shadow bg-background/50 backdrop-filter backdrop-blur-sm border-primary/10">
+      <Card className="card-hover bg-card border-primary/10">
         <CardHeader>
           <div className="p-2 bg-primary/10 rounded-full inline-block mb-2">
             {icon}
@@ -231,6 +287,36 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
         </CardContent>
       </Card>
     </motion.div>
+  );
+}
+
+function TestimonialCard({ quote, author, company }: { quote: string; author: string; company: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="card-hover bg-card border-primary/10">
+        <CardHeader>
+          <CardTitle className="text-xl text-foreground">"{quote}"</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-muted-foreground">
+            {author}, {company}
+          </CardDescription>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+function SocialLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link href={href} className="text-muted-foreground hover:text-foreground transition-colors">
+      <span className="sr-only">{label}</span>
+      {icon}
+    </Link>
   );
 }
 

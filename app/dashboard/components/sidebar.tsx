@@ -158,7 +158,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                     <DialogClose asChild>
                       <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <SignOutButton signOutOptions={{ redirectUrl: '/sign-in' }}>
+                    <SignOutButton signOutOptions={{ redirectUrl: '/' }}>
                       <Button variant="destructive">Sign Out</Button>
                     </SignOutButton>
                   </DialogFooter>

@@ -84,3 +84,32 @@
     @apply bg-background text-foreground;
   }
 }
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#ffa500];
+}
+
+.bg-gradient {
+  @apply bg-gradient-to-br from-primary/5 via-[#ffa500]/5 to-[#ff6347]/5;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+.button-gradient {
+  @apply bg-gradient-to-r from-primary to-[#ffa500] text-primary-foreground font-semibold py-2 px-4 rounded-md transition-all duration-300 hover:from-[#ffa500] hover:to-primary;
+}
+
+.section-padding {
+  @apply py-20 sm:py-32;
+}
+
+.container-padding {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+
+.hero-text-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
