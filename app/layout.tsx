@@ -5,12 +5,23 @@ import { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
-  metadataBase: new URL("https://clerk-next-app.vercel.app/"),
-  title: "Next.js Clerk Template",
+  metadataBase: new URL("https://eltrackez.com/F"),
+  title: "ElTrackEz",
   description:
-    "A simple and powerful Next.js template featuring authentication and user management powered by Clerk.",
-  openGraph: { images: ["/og.png"] },
+    "A simple application streamline project payments and empower teams with real-time financial tracking and automated updates.",
+  openGraph: { images: ["/logo.png"] },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
+
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
