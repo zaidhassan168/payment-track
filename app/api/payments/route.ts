@@ -59,7 +59,7 @@ function validatePaymentData(data: Payment): string | null {
     return "Missing required fields";
   }
 
-  const allowedCategories = ["income", "clientexpense", "projectexpense", "deduction", "extraexpense"] as const;
+  const allowedCategories = ["income", "extraIncome", "clientexpense", "projectexpense", "deduction", "extraexpense"] as const;
   if (!allowedCategories.includes(data.category.toLowerCase() as any)) {
     return "Invalid category";
   }
@@ -94,7 +94,7 @@ function updatePaymentSummary(projectData: any, amount: number, category: string
     balance: 0,
   };
 
-  if (category === "income") {
+  if (category === "income" || category === "extraIncome") {
     currentSummary.totalIncome += amount;
   } else {
     if (category === "clientexpense") {
