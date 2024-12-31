@@ -128,7 +128,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const getSummaryData = () => {
     if (!project || !project.paymentSummary) {
       return {
-        totalIncome: 0,
+        income: 0,
         totalExpenses: 0,
         balance: 0,
         expensesBreakdown: []
@@ -136,7 +136,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
 
     const { paymentSummary } = project;
-    const totalOverallIncome = paymentSummary.totalIncome + (paymentSummary.extraIncome || 0);
+    const totalIncome = paymentSummary.income + (paymentSummary.extraIncome || 0);
     const totalExpenses = paymentSummary.totalExpenses.clientExpense +
       paymentSummary.totalExpenses.projectExpense +
       paymentSummary.totalExpenses.deduction +
@@ -150,14 +150,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     ];
 
     const incomeBreakdown = [
-      { name: 'Income', value: paymentSummary.totalIncome },
+      { name: 'Income', value: paymentSummary.income },
       { name: 'Extra Income', value: paymentSummary.extraIncome || 0 },
     ];
 
     return {
-      totalOverallIncome,
+      totalIncome,
       extraIncome: paymentSummary.extraIncome || 0,
-      totalIncome: paymentSummary.totalIncome,
+      income: paymentSummary.income,
       totalExpenses,
       balance: paymentSummary.balance,
       expensesBreakdown
@@ -183,7 +183,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     datasets: [
       {
         label: "Amount (PKR)",
-        data: [summary.totalIncome, summary.totalExpenses],
+        data: [summary.income, summary.totalExpenses],
         backgroundColor: ["#22c55e", "#ef4444"]
       }
     ]
@@ -287,13 +287,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       <CardContent className="p-4">
                         <p className="text-sm font-medium text-emerald-600">Total Income</p>
                         <p className="text-2xl font-bold text-emerald-700">
-                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalOverallIncome ?? 0)}
+                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome ?? 0)}
                         </p>
                         <div className="flex flex-row items-center space-x-4">
                           <div>
                             <p className="text-xs font-medium text-gray-500">Base Income</p>
                             <p className="text-sm font-bold text-gray-700">
-                              PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome ?? 0)}
+                              PKR {new Intl.NumberFormat('en-PK').format(summary.income ?? 0)}
                             </p>
                           </div>
                           <div>

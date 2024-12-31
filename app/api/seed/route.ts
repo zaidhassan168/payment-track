@@ -20,7 +20,7 @@ export async function GET() {
         client: faker.company.name(),
         deadline: faker.date.future().toISOString().split("T")[0],
         paymentSummary: {
-          totalIncome: 0,
+          income: 0,
           totalExpenses: {
             clientExpense: 0,
             projectExpense: 0,

@@ -10,10 +10,10 @@ import {
   increment,
   getDocs,
 } from "firebase/firestore";
-import {  } from "@/types";
+import { } from "@/types";
 import { paymentSchema } from "@/lib/schemas/payment";
 import { sendPaymentNotification } from "@/lib/notifications";
-import { Stakeholder, Payment } from "@/types";
+import { Stakeholder, Payment, Item } from "@/types";
 
 export async function POST(req: Request) {
   try {
@@ -38,7 +38,9 @@ export async function POST(req: Request) {
 
     const updatedSummary = updatePaymentSummary(projectData, data.amount, category);
     await updateProjectDocument(data.projectId, updatedSummary, data.amount);
-
+    if (data.item) {
+      await addItemToProject(data.item, data.projectId, data.amount);
+    }
     if (data.date) {
       await updateOverviewCollection(data.date, data.projectId, projectData.name || "", data.amount); // Include projectName
       await updateMonthlyTotal(data.date, data.amount);
@@ -70,6 +72,7 @@ function validatePaymentData(data: Payment): string | null {
 function normalizeCategory(category: string): string {
   return category.toLowerCase() as
     | "income"
+    | "extraincome"
     | "clientexpense"
     | "projectexpense"
     | "deduction"
@@ -84,7 +87,9 @@ async function getProjectData(projectId: string) {
 
 function updatePaymentSummary(projectData: any, amount: number, category: string) {
   const currentSummary = projectData.paymentSummary || {
-    totalIncome: 0,
+
+    income: 0,
+    extraIncome: 0,
     totalExpenses: {
       clientExpense: 0,
       projectExpense: 0,
@@ -94,27 +99,30 @@ function updatePaymentSummary(projectData: any, amount: number, category: string
     balance: 0,
   };
 
-  if (category === "income" || category === "extraIncome") {
-    currentSummary.totalIncome += amount;
-  } else {
-    if (category === "clientexpense") {
-      currentSummary.totalExpenses.clientExpense += amount;
-    } else if (category === "projectexpense") {
-      currentSummary.totalExpenses.projectExpense += amount;
-    } else if (category === "deduction") {
-      currentSummary.totalExpenses.deduction += amount;
-    } else if (category === "extraexpense") {
-      currentSummary.totalExpenses.extraExpense += amount;
-    }
+  if (category === "income") {
+    currentSummary.income += amount;
+  }
+  else if (category === "extraincome") {
+    currentSummary.extraIncome += amount;
+  }
+  else if (category === "clientexpense") {
+    currentSummary.totalExpenses.clientExpense += amount;
+  } else if (category === "projectexpense") {
+    currentSummary.totalExpenses.projectExpense += amount;
+  } else if (category === "deduction") {
+    currentSummary.totalExpenses.deduction += amount;
+  } else if (category === "extraexpense") {
+    currentSummary.totalExpenses.extraExpense += amount;
   }
 
+  const totalIncome = currentSummary.income + currentSummary.extraIncome;
   const totalExpensesSum =
     currentSummary.totalExpenses.clientExpense +
     currentSummary.totalExpenses.projectExpense +
     currentSummary.totalExpenses.deduction +
     currentSummary.totalExpenses.extraExpense;
 
-  currentSummary.balance = currentSummary.totalIncome - totalExpensesSum;
+  currentSummary.balance = totalIncome - totalExpensesSum;
 
   return currentSummary;
 }
@@ -184,14 +192,24 @@ async function updateMonthlyTotal(date: string, amount: number) {
   }
 }
 
+
+async function addItemToProject(item: Item, projectId: string, totalAmount: number) {
+  const projectRef = doc(db, "projects", projectId);
+  item.totalAmount = totalAmount;
+  //add the subcollection items in the project collection and keep adding the items in the subcollection as seprate document
+  await addDoc(collection(projectRef, "items"), item);
+
+}
+
 export async function GET(request: Request) {
   try {
-   // here write the api to gget the daata from the firestore database of payment collection
-   const payments = await getDocs(collection(db, "payments"));
-   const paymentsData = payments.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-   return NextResponse.json(paymentsData, { status: 200 });}
-   catch (error) {
+    // here write the api to gget the daata from the firestore database of payment collection
+    const payments = await getDocs(collection(db, "payments"));
+    const paymentsData = payments.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return NextResponse.json(paymentsData, { status: 200 });
+  }
+  catch (error) {
     console.error("Error fetching payments:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-   }
   }
+}

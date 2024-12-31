@@ -19,6 +19,7 @@ export interface Item {
   measurementType?: 'weight' | 'volume' | 'quantity';
   quantity: number;
   unitPrice?: number;
+  totalAmount?: number;
 }
 
 
@@ -48,7 +49,7 @@ export interface Stakeholder {
 
 // Define a type for PaymentSummary categories to ensure consistency:
 export interface PaymentSummary {
-  totalIncome: number;
+  income: number;
   extraIncome?: number;
   totalExpenses: {
     clientExpense: number;
@@ -77,7 +78,7 @@ export interface Project {
 
 
 
-
+  
 
 export interface ProjectTransfer {
   projectName: string;
