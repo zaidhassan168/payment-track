@@ -18,11 +18,11 @@ import { Stakeholder, Payment, Item } from "@/types";
 export async function POST(req: Request) {
   try {
     const json: Payment = await req.json();
-    console.log("data json", json);
     const data = paymentSchema.parse(json); // Validate here
-    console.log("data", data);
+    console.log("in the api");
 
     const validationError = validatePaymentData(data);
+    console.log("in the api", validationError);
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
@@ -32,15 +32,14 @@ export async function POST(req: Request) {
     if (!projectData) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
-
     data.projectName = projectData.name || "";
     const paymentRef = await addDoc(collection(db, "payments"), data);
 
     const updatedSummary = updatePaymentSummary(projectData, data.amount, category);
     await updateProjectDocument(data.projectId, updatedSummary, data.amount);
-    if (data.item) {
-      await addItemToProject(data.item, data.projectId, data.amount);
-    }
+    // if (data.item) {
+    //   await addItemToProject(data.item, data.projectId, data.amount);
+    // }
     if (data.date) {
       await updateOverviewCollection(data.date, data.projectId, projectData.name || "", data.amount); // Include projectName
       await updateMonthlyTotal(data.date, data.amount);
@@ -49,6 +48,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ id: paymentRef.id, message: "Payment created successfully" }, { status: 201 });
 
   } catch (error) {
+
     console.error("Error creating payment:", error);
     if (error instanceof Error && "issues" in error) {
       return NextResponse.json({ error: (error as any).issues }, { status: 400 });
@@ -61,7 +61,7 @@ function validatePaymentData(data: Payment): string | null {
     return "Missing required fields";
   }
 
-  const allowedCategories = ["income", "extraIncome", "clientexpense", "projectexpense", "deduction", "extraexpense"] as const;
+  const allowedCategories = ["income", "extraincome", "clientexpense", "projectexpense", "deduction", "extraexpense"] as const;
   if (!allowedCategories.includes(data.category.toLowerCase() as any)) {
     return "Invalid category";
   }
