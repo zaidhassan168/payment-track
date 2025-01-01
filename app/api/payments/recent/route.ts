@@ -12,7 +12,12 @@ export async function GET() {
     querySnapshot.forEach((doc) => {
       payments.push({ id: doc.id, ...doc.data() } as Payment);
     });
-    return NextResponse.json(payments);
+
+    const response = NextResponse.json(payments);
+    response.headers.set("Access-Control-Allow-Origin", "*"); // Allow all origins
+    response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS"); // Specify allowed methods
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); // Specify allowed headers
+    return response;
   } catch (error) {
     console.error("Error fetching recent payments:", error);
     return NextResponse.json({ error: "Failed to fetch recent payments" }, { status: 500 });
