@@ -1,23 +1,35 @@
 // src/types/index.ts
 
+import { Item } from "@radix-ui/react-select";
+
 // If you want a clear representation of ISO date strings:
 export type ISODateString = string;
 
 export type PaymentCategory = 
   | "income" 
+  | "extraIncome"
   | "clientExpense" 
   | "projectExpense" 
   | "deduction" 
   | "extraExpense";
 
 // Payment Type
+export interface Item {
+  name: string;
+  measurementType?: 'weight' | 'volume' | 'quantity';
+  quantity: number;
+  unitPrice?: number;
+  totalAmount?: number;
+}
+
+
 export interface Payment {
   id?: string;
   projectId: string;
   date?: string;
   description?: string;
   stakeholder: Stakeholder; // Now a full object, not just a string
-  item?: string;
+  item?: Item;
   category: PaymentCategory;
   amount: number;
   sentTo?: string;
@@ -37,7 +49,8 @@ export interface Stakeholder {
 
 // Define a type for PaymentSummary categories to ensure consistency:
 export interface PaymentSummary {
-  totalIncome: number;
+  income: number;
+  extraIncome?: number;
   totalExpenses: {
     clientExpense: number;
     projectExpense: number;
@@ -65,7 +78,7 @@ export interface Project {
 
 
 
-
+  
 
 export interface ProjectTransfer {
   projectName: string;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { addPayment } from "@/app/services/payments";
 import { uploadImage } from "@/app/services/imageUpload";
-import { Payment, Stakeholder } from "@/types";
+import { Payment, Stakeholder, Item, PaymentCategory } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,15 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { showSuccessToast, showErrorToast } from "@/lib/taost-utils";
 
-type PaymentFieldValue = string | number | Date | Stakeholder;
+type PaymentFieldValue = string | number | Date | Stakeholder | Item[keyof Item];
 
 type CreatePaymentModalProps = {
   isOpen: boolean;
@@ -27,30 +28,43 @@ type CreatePaymentModalProps = {
   onClose: () => void;
   onSuccess: () => void;
 };
-
+type PaymentFormData = Omit<Payment, 'item'> & {
+  item?: {
+    name: string;
+    measurementType?: 'weight' | 'volume' | 'quantity';
+    quantity: number;
+    unitPrice: number;
+  };
+};
 export default function CreatePaymentModal({
   isOpen,
   projectId,
   onClose,
   onSuccess,
 }: CreatePaymentModalProps) {
-  const [formData, setFormData] = useState<Partial<Payment>>({
+  const [formData, setFormData] = useState<Partial<PaymentFormData>>({
     projectId,
     date: new Date().toISOString().split("T")[0],
     description: "",
-    stakeholder: undefined,
-    item: "",
-    category: undefined,
+    stakeholder: {} as Stakeholder,
+    item: {
+      name: "",
+      measurementType: 'quantity',
+      quantity: 0,
+      unitPrice: 0,
+    },
+    category: "income" as PaymentCategory,
     amount: 0,
     sentTo: "",
     from: "",
   });
 
+
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [isItemSectionOpen, setIsItemSectionOpen] = useState(false);
 
-  // Fetch stakeholders when modal opens
   useEffect(() => {
     const fetchStakeholders = async () => {
       if (!projectId || !isOpen) return;
@@ -71,42 +85,80 @@ export default function CreatePaymentModal({
   }, [projectId, isOpen]);
 
   const handleChange = (name: string, value: PaymentFieldValue) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      if (name.startsWith("item.")) {
+        const itemField = name.split(".")[1] as keyof Item;
+        return {
+          ...prev,
+          item: {
+            ...prev.item,
+            [itemField]: value,
+          } as PaymentFormData['item'],
+        };
+      }
+      return { ...prev, [name]: value };
+    });
+  };
+  const validateItemFields = () => {
+    if (formData.item?.name && !formData.item.quantity) {
+      return "Please enter a quantity";
+    }
+    if (formData.item?.quantity && !formData.item.name) {
+      return "Please enter an item name";
+    }
+    return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("Submitting with formData:", formData);
-
+  
     if (!formData.category || !formData.amount) {
       alert("Category and Amount are required!");
       return;
     }
-    if (!formData.stakeholder) {
+    if (!formData.stakeholder || !formData.stakeholder.id) {
       alert("Please select a stakeholder before submitting.");
       return;
     }
 
+    validateItemFields();
+  
     setLoading(true);
     try {
       let screenshotUrl = formData.screenshotUrl;
       if (file) {
         screenshotUrl = await uploadImage(file, "screenshots");
       }
-
-      const paymentData: Payment = {
+  
+      // Create a copy of the payment data
+      const paymentData: Payment= {
         ...formData,
         projectId,
         amount: Number(formData.amount),
         screenshotUrl,
         timestamp: new Date().toISOString(),
-        category: formData.category || "income",
+        category: formData.category as PaymentCategory,
         projectName: formData.projectName || "Unknown Project",
-      } as Payment;
-
-      console.log("Final paymentData:", paymentData);
-
+        stakeholder: formData.stakeholder as Stakeholder,
+      };
+  
+      // Only include item if it has valid data
+      if (formData.item && 
+          formData.item.name && 
+          formData.item.name.trim() !== '' && 
+          formData.item.quantity > 0) {
+        paymentData.item = {
+          name: formData.item.name,
+          measurementType: formData.item.measurementType || 'quantity',
+          quantity: formData.item.quantity,
+          unitPrice: formData.item.unitPrice || 0,
+        };
+      
+      }
+      else {
+        delete paymentData.item;
+      }
+  
       await addPayment(paymentData);
       showSuccessToast("Payment created successfully");
       onSuccess();
@@ -118,78 +170,56 @@ export default function CreatePaymentModal({
       setLoading(false);
     }
   };
-
-  const selectedStakeholderId = formData.stakeholder?.id || "";
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] bg-white shadow-lg rounded-lg">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-white shadow-lg rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-800">Create Payment</DialogTitle>
           <DialogDescription className="text-sm text-gray-600">
-            Add a new payment to your project. Fill in the details below.
+            Add a new payment to your project.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-6 py-6">
-
-            {/* Date Field */}
-            <div className="grid grid-cols-4 items-center gap-4 bg-secondary p-2 rounded-md">
-              <Label htmlFor="date" className="text-right font-medium text-gray-700">Date</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date" className="font-medium text-gray-700">Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-[280px] justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal",
                       !formData.date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date ? format(new Date(formData.date), "PPP") : <span>Pick a date</span>}
+                    {formData.date ? format(new Date(formData.date), "yyyy-MM-dd") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={formData.date ? new Date(formData.date) : new Date()}
-                    onSelect={(date) => handleChange("date", date?.toISOString().split("T")[0] || "")}
+                    selected={formData.date ? new Date(formData.date) : undefined}
+                    onSelect={(date) => handleChange("date", date ? format(date, "yyyy-MM-dd") : "")}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
-
-            {/* Description */}
-            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
-              <Label htmlFor="description" className="text-right font-medium text-gray-700">Description</Label>
-              <Textarea
-                id="description"
-                className="col-span-3"
-                value={formData.description || ""}
-                onChange={(e) => handleChange("description", e.target.value)}
-              />
-            </div>
-
-            {/* Stakeholder Selection */}
-            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
-              <Label htmlFor="stakeholder" className="text-right font-medium text-gray-700">Stakeholder</Label>
+            <div className="space-y-2">
+              <Label htmlFor="stakeholder" className="font-medium text-gray-700">Stakeholder</Label>
               <Select
                 onValueChange={(value) => {
-                  console.log("Selected stakeholder ID:", value);
                   const selected = stakeholders.find(st => st.id === value);
                   if (selected) {
-                    console.log("Selected stakeholder object:", selected);
                     handleChange("stakeholder", selected);
-                  } else {
-                    console.warn("No stakeholder found for the selected ID:", value);
                   }
                 }}
-                value={selectedStakeholderId}
+                value={formData.stakeholder?.id || ""}
               >
-                <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder={stakeholders.length === 0 ? "No stakeholders available" : "Select a stakeholder"} />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={stakeholders.length === 0 ? "No stakeholders" : "Select"} />
                 </SelectTrigger>
                 <SelectContent>
                   {stakeholders.length === 0 ? (
@@ -202,78 +232,154 @@ export default function CreatePaymentModal({
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4 bg-gray-50 p-2 rounded-md">
-              <Label htmlFor="category" className="text-right font-medium text-gray-700">Category</Label>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="font-medium text-gray-700">Description</Label>
+            <Textarea
+              id="description"
+              className="w-full"
+              value={formData.description || ""}
+              onChange={(e) => handleChange("description", e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category" className="font-medium text-gray-700">Category</Label>
               <Select
                 onValueChange={(value) => handleChange("category", value)}
                 value={formData.category || ""}
               >
-                <SelectTrigger className="w-[280px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="income">Income</SelectItem>
-                  <SelectItem value="deduction">Deduction</SelectItem>
-                  <SelectItem value="extraExpense">Extra Expense</SelectItem>
+                  <SelectItem value="extraIncome">Extra Income</SelectItem>
                   <SelectItem value="clientExpense">Client Expense</SelectItem>
                   <SelectItem value="projectExpense">Project Expense</SelectItem>
+                  <SelectItem value="deduction">Deduction</SelectItem>
+                  <SelectItem value="extraExpense">Extra Expense</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Item and Amount */}
-            <div className="grid grid-cols-8 items-center gap-4 bg-secondary p-2 rounded-md">
-              <Label htmlFor="item" className="text-right font-medium text-gray-700 col-span-1">Item</Label>
-              <Input
-                id="item"
-                className="col-span-3"
-                value={formData.item || ""}
-                onChange={(e) => handleChange("item", e.target.value)}
-              />
-              <Label htmlFor="amount" className="text-right font-medium text-gray-700 col-span-1">Amount</Label>
+            <div className="space-y-2">
+              <Label htmlFor="amount" className="font-medium text-gray-700">Amount</Label>
               <Input
                 id="amount"
                 type="number"
-                className="col-span-3"
-                value={formData.amount || 0}
+                value={formData.amount || ""}
                 onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
               />
             </div>
+          </div>
 
-            {/* Category */}
-            
+          <Collapsible
+            open={isItemSectionOpen}
+            onOpenChange={setIsItemSectionOpen}
+            className="space-y-2 bg-gray-50 p-4 rounded-md"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-700">Item Details</h3>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 p-0">
+                  {isItemSectionOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">Toggle item details</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="item.name" className="font-medium text-gray-700">Item Name</Label>
+                  <Input
+                    id="item.name"
+                    value={formData.item?.name || ""}
+                    onChange={(e) => handleChange("item.name", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item.measurementType" className="font-medium text-gray-700">Measurement</Label>
+                  <Select
+                    onValueChange={(value) => handleChange("item.measurementType", value)}
+                    value={formData.item?.measurementType || "quantity"}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="weight">Weight</SelectItem>
+                      <SelectItem value="volume">Volume</SelectItem>
+                      <SelectItem value="quantity">Quantity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="item.quantity" className="font-medium text-gray-700">Quantity</Label>
+                  <Input
+                    id="item.quantity"
+                    type="number"
+                    value={formData.item?.quantity || ""}
+                    onChange={(e) => handleChange("item.quantity", parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item.unitPrice" className="font-medium text-gray-700">Unit Price</Label>
+                  <Input
+                    id="item.unitPrice"
+                    type="number"
+                    value={formData.item?.unitPrice || ""}
+                    onChange={(e) => handleChange("item.unitPrice", parseFloat(e.target.value))}
+                  />
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-            {/* Sent To and From */}
-            <div className="grid grid-cols-8 items-center gap-4 bg-gray-50 p-2 rounded-md">
-              <Label htmlFor="sentTo" className="text-right font-medium text-gray-700 col-span-1">Sent To</Label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="sentTo" className="font-medium text-gray-700">Sent To</Label>
               <Input
                 id="sentTo"
-                className="col-span-3"
                 value={formData.sentTo || ""}
                 onChange={(e) => handleChange("sentTo", e.target.value)}
               />
-              <Label htmlFor="from" className="text-right font-medium text-gray-700 col-span-1">From</Label>
-              <Input
-                id="from"
-                className="col-span-3"
-                value={formData.from || ""}
-                onChange={(e) => handleChange("from", e.target.value)}
-              />
             </div>
-
-            {/* Screenshot */}
-            <div className="grid grid-cols-4 items-center gap-4 bg-secondary p-2 rounded-md">
-              <Label htmlFor="screenshot" className="text-right font-medium text-gray-700">Screenshot</Label>
-              <Input
-                id="screenshot"
-                type="file"
-                className="col-span-3"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-              />
+            <div className="space-y-2">
+              <Label htmlFor="from" className="font-medium text-gray-700">From</Label>
+              <Select
+                onValueChange={(value) => handleChange("from", value)}
+                value={formData.from || ""}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="screenshot" className="font-medium text-gray-700">Screenshot</Label>
+            <Input
+              id="screenshot"
+              type="file"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+          </div>
+
           <DialogFooter>
-            <Button type="submit" disabled={loading} className="bg-primary text-white hover:bg-primary-dark">
+            <Button type="submit" disabled={loading} className="w-full bg-primary text-white hover:bg-primary-dark">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Submitting..." : "Create Payment"}
             </Button>
@@ -283,3 +389,4 @@ export default function CreatePaymentModal({
     </Dialog>
   );
 }
+

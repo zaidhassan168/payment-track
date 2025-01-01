@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     // Initialize paymentSummary if you want a default structure
     const defaultPaymentSummary = {
-      totalIncome: 0,
+      income: 0,
       totalExpenses: {
         clientExpense: 0,
         projectExpense: 0,

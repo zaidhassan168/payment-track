@@ -36,14 +36,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     const unwrapParams = async () => {
       const unwrappedParams = await params;
       setProjectId(unwrappedParams.id);
-      
+
       Promise.all([
         fetchProjectDetails(unwrappedParams.id),
         fetchPayments(unwrappedParams.id),
         fetchStakeholders(unwrappedParams.id)
       ]);
     };
-  
+
     unwrapParams();
   }, [params]);
 
@@ -128,7 +128,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const getSummaryData = () => {
     if (!project || !project.paymentSummary) {
       return {
-        totalIncome: 0,
+        income: 0,
         totalExpenses: 0,
         balance: 0,
         expensesBreakdown: []
@@ -136,6 +136,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
 
     const { paymentSummary } = project;
+    const totalIncome = paymentSummary.income + (paymentSummary.extraIncome || 0);
     const totalExpenses = paymentSummary.totalExpenses.clientExpense +
       paymentSummary.totalExpenses.projectExpense +
       paymentSummary.totalExpenses.deduction +
@@ -148,8 +149,15 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       { name: 'Extra Expense', value: paymentSummary.totalExpenses.extraExpense },
     ];
 
+    const incomeBreakdown = [
+      { name: 'Income', value: paymentSummary.income },
+      { name: 'Extra Income', value: paymentSummary.extraIncome || 0 },
+    ];
+
     return {
-      totalIncome: paymentSummary.totalIncome,
+      totalIncome,
+      extraIncome: paymentSummary.extraIncome || 0,
+      income: paymentSummary.income,
       totalExpenses,
       balance: paymentSummary.balance,
       expensesBreakdown
@@ -175,7 +183,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     datasets: [
       {
         label: "Amount (PKR)",
-        data: [summary.totalIncome, summary.totalExpenses],
+        data: [summary.income, summary.totalExpenses],
         backgroundColor: ["#22c55e", "#ef4444"]
       }
     ]
@@ -279,10 +287,26 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       <CardContent className="p-4">
                         <p className="text-sm font-medium text-emerald-600">Total Income</p>
                         <p className="text-2xl font-bold text-emerald-700">
-                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome)}
+                          PKR {new Intl.NumberFormat('en-PK').format(summary.totalIncome ?? 0)}
                         </p>
+                        <div className="flex flex-row items-center space-x-4">
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Base Income</p>
+                            <p className="text-sm font-bold text-gray-700">
+                              PKR {new Intl.NumberFormat('en-PK').format(summary.income ?? 0)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Extra Income</p>
+                            <p className="text-sm font-bold text-gray-700">
+                              PKR {new Intl.NumberFormat('en-PK').format(summary.extraIncome ?? 0)}
+                            </p>
+                          </div>
+                        </div>
+
                       </CardContent>
                     </Card>
+
                     <Card className="bg-red-50">
                       <CardContent className="p-4">
                         <p className="text-sm font-medium text-red-600">Total Expenses</p>
@@ -338,48 +362,48 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 </Card>
               </div>
             </TabsContent>
-           <TabsContent value="stakeholders">
-    <Card className="bg-white shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-xl text-slate-800">Project Stakeholders</CardTitle>
-        <Button onClick={handleAddStakeholder}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Stakeholder
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {stakeholders && stakeholders.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-slate-600">Name</TableHead>
-                <TableHead className="text-slate-600">Role</TableHead>
-                <TableHead className="text-slate-600">Contact</TableHead>
-                <TableHead className="text-slate-600">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {stakeholders.map((st) => (
-                <TableRow key={st.id}>
-                  <TableCell className="font-medium text-slate-700">{st.name}</TableCell>
-                  <TableCell className="text-slate-600">{st.role}</TableCell>
-                  <TableCell className="text-slate-600">{st.contact}</TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => handleEditStakeholder(st)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <p className="text-center text-slate-500 py-8">No stakeholders found for this project.</p>
-        )}
-      </CardContent>
-    </Card>
-  </TabsContent>
+            <TabsContent value="stakeholders">
+              <Card className="bg-white shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-xl text-slate-800">Project Stakeholders</CardTitle>
+                  <Button onClick={handleAddStakeholder}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Stakeholder
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {stakeholders && stakeholders.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-slate-600">Name</TableHead>
+                          <TableHead className="text-slate-600">Role</TableHead>
+                          <TableHead className="text-slate-600">Contact</TableHead>
+                          <TableHead className="text-slate-600">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {stakeholders.map((st) => (
+                          <TableRow key={st.id}>
+                            <TableCell className="font-medium text-slate-700">{st.name}</TableCell>
+                            <TableCell className="text-slate-600">{st.role}</TableCell>
+                            <TableCell className="text-slate-600">{st.contact}</TableCell>
+                            <TableCell>
+                              <Button variant="outline" size="sm" onClick={() => handleEditStakeholder(st)} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-slate-500 py-8">No stakeholders found for this project.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
 
           <div className="mb-8 flex flex-col sm:flex-row justify-between gap-4">
@@ -421,7 +445,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                         <TableHead className="text-slate-600">Item</TableHead>
                         <TableHead className="text-slate-600">Category</TableHead>
                         <TableHead className="text-slate-600">Amount</TableHead>
-                        <TableHead className="text-slate-600">Sent To</TableHead>
+                        <TableHead className="text-slate-600">Quantity</TableHead>
                         <TableHead className="text-slate-600">From</TableHead>
                         <TableHead className="text-slate-600">Screenshot</TableHead>
                       </TableRow>
@@ -432,10 +456,10 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                           <TableCell className="text-slate-700">{payment.date}</TableCell>
                           <TableCell className="text-slate-700">{payment.description}</TableCell>
                           <TableCell className="text-slate-700">{payment.stakeholder.name}</TableCell>
-                          <TableCell className="text-slate-700">{payment.item}</TableCell>
+                          <TableCell className="text-slate-700">{payment.item?.name}</TableCell>
                           <TableCell className="text-slate-700">{payment.category}</TableCell>
                           <TableCell className="text-slate-700 font-medium">PKR {new Intl.NumberFormat('en-PK').format(payment.amount)}</TableCell>
-                          <TableCell className="text-slate-700">{payment.sentTo}</TableCell>
+                          <TableCell className="text-slate-700">{payment.item?.quantity}</TableCell>
                           <TableCell className="text-slate-700">{payment.from}</TableCell>
                           <TableCell>
                             <Button variant="outline" size="sm" onClick={() => window.open(payment.screenshotUrl, "_blank")} className="bg-slate-100 hover:bg-slate-200 text-slate-700">
@@ -480,14 +504,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
         onSuccess={handleProjectUpdated}
       />
 
-      
-  <EditStakeholderModal
-    isOpen={stakeholderModalOpen}
-    projectId={projectId || ""}
-    stakeholder={selectedStakeholder}
-    onClose={() => setStakeholderModalOpen(false)}
-    onSuccess={handleStakeholderModalSuccess}
-  />
+
+      <EditStakeholderModal
+        isOpen={stakeholderModalOpen}
+        projectId={projectId || ""}
+        stakeholder={selectedStakeholder}
+        onClose={() => setStakeholderModalOpen(false)}
+        onSuccess={handleStakeholderModalSuccess}
+      />
 
     </div>
   );
