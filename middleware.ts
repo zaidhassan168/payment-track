@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { auth } from '@clerk/nextjs/server';
 
 const isProtectedRoute = createRouteMatcher(["/dashboard/:path*"]);
 const isApiRoute = createRouteMatcher(['/(api|trpc)(.*)']);
@@ -10,37 +9,42 @@ const CUSTOM_API_KEY = process.env.CUSTOM_API_KEY || "my-custom-api-key";
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
-  console.log("Request URL:", req.url);
   const path = req.nextUrl.pathname;
-  console.log("Path:", path);
+  const response = NextResponse.next();
 
-  // Check for the custom API key in the request headers
-  const apiKey = req.headers.get('x-api-key');
+  // Set CORS headers for API routes
+  if (isApiRoute(req)) {
+    response.headers.set("Access-Control-Allow-Origin", "*"); // Allow all origins
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-api-key");
 
+    // Handle preflight requests (OPTIONS method)
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        headers: response.headers,
+      });
+    }
+  }
 
-  // if (path.startsWith("/api") && !userId) {
-  // //     if (!apiKey || apiKey !== CUSTOM_API_KEY) {
-  // //   return NextResponse.json(
-  // //     { error: "Invalid API Key" },
-  // //     { status: 403 } // Return a 403 status code for forbidden access
-  // //   );
-  // // }
-  //   return NextResponse.json(
-  //     { error: "Unauthorized" },
-  //     { status: 401 } // Return a 401 status code
-  //   );
-  // }
-  // if (isApiRoute(req)) await auth.protect();
-
+  // Handle protected routes
   if (isProtectedRoute(req)) {
-    console.log("Protected route:", req.url);
     if (!userId) {
-      console.log("No user session, redirecting to landing page");
       return NextResponse.redirect(new URL("/", req.url));
     }
   }
 
-  return NextResponse.next();
+  // Validate custom API key for API routes
+  // if (isApiRoute(req)) {
+  //   const apiKey = req.headers.get("x-api-key");
+  //   if (!userId && (!apiKey || apiKey !== CUSTOM_API_KEY)) {
+  //     return NextResponse.json(
+  //       { error: "Unauthorized" },
+  //       { status: 401 }
+  //     );
+  //   }
+  // }
+
+  return response;
 });
 
 export const config = {
@@ -48,4 +52,4 @@ export const config = {
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     '/(api|trpc)(.*)',
   ],
-}
+};
