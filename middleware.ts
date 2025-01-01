@@ -18,19 +18,19 @@ export default clerkMiddleware(async (auth, req) => {
   const apiKey = req.headers.get('x-api-key');
 
 
-  if (path.startsWith("/api") && !userId) {
-  //     if (!apiKey || apiKey !== CUSTOM_API_KEY) {
+  // if (path.startsWith("/api") && !userId) {
+  // //     if (!apiKey || apiKey !== CUSTOM_API_KEY) {
+  // //   return NextResponse.json(
+  // //     { error: "Invalid API Key" },
+  // //     { status: 403 } // Return a 403 status code for forbidden access
+  // //   );
+  // // }
   //   return NextResponse.json(
-  //     { error: "Invalid API Key" },
-  //     { status: 403 } // Return a 403 status code for forbidden access
+  //     { error: "Unauthorized" },
+  //     { status: 401 } // Return a 401 status code
   //   );
   // }
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 } // Return a 401 status code
-    );
-  }
-  if (isApiRoute(req)) await auth.protect();
+  // if (isApiRoute(req)) await auth.protect();
 
   if (isProtectedRoute(req)) {
     console.log("Protected route:", req.url);
