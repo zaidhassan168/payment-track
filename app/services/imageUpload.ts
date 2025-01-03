@@ -29,3 +29,29 @@ export async function uploadImage(file: File, folder: string = "uploads"): Promi
     throw new Error("Failed to upload image.");
   }
 }
+
+export async function apiUploadImage(
+  fileBuffer: Buffer,
+  filename = "unnamed-file",
+  folder = "uploads"
+): Promise<string> {
+  if (!fileBuffer || fileBuffer.length === 0) {
+    throw new Error("No file buffer provided for upload.");
+  }
+
+  try {
+    // Create a unique file path using the filename and a timestamp
+    const filePath = `${folder}/${Date.now()}-${filename}`;
+    const fileRef = ref(storage, filePath);
+
+    // Upload the file as bytes
+    const uploadResult = await uploadBytes(fileRef, fileBuffer);
+
+    // Retrieve the download URL
+    const downloadURL = await getDownloadURL(uploadResult.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw new Error("Failed to upload image.");
+  }
+}
