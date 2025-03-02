@@ -76,7 +76,7 @@ export async function updatePayment(id: string, paymentData: Payment){
 
   export const getRecentPayments = async (): Promise<Payment[]> => {
     try {
-      const res = await fetch("/api/payments/recent");
+      const res = await fetch("http://localhost:3000/api/payments/recent");
       if (!res.ok) {
         throw new Error("Failed to fetch recent payments");
       }

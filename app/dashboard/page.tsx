@@ -1,66 +1,41 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { getOverviewMetrics } from "@/app/services/overview";
-import { getRecentPayments } from "@/app/services/payments";
-import { Button } from "@/components/ui/button";
+import { getOverviewMetrics } from '@/app/services/overview';
+import { getRecentPayments } from '@/app/services/payments';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/components/ui/card";
-import { Loader2, TrendingUp, Briefcase, CreditCard, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { ProjectTransfersAreaChart } from "./components/ProjectTransfersAreaChart";
-import { RenderPaymentsContent } from "./components/RenderPaymentsContent";
-import { Project, Metrics, DayTransfer, ProjectTransfer, Payment } from "@/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '@/components/ui/card';
+import { Loader2, TrendingUp, Briefcase, CreditCard, Users } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
+import { ProjectTransfersAreaChart } from './components/ProjectTransfersAreaChart';
+import { RenderPaymentsContent } from './components/RenderPaymentsContent';
+import { Project, Metrics, Payment } from '@/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-export default function DashboardPage() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [loadingOverview, setLoadingOverview] = useState(true);
-  const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
-  const [loadingPayments, setLoadingPayments] = useState(true);
-  const router = useRouter();
+export default async function DashboardPage() {
+  // Fetch data on the server
+  let metrics: Metrics | null = null;
+  let recentPayments: Payment[] = [];
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoadingOverview(true);
-      try {
-        const metricsData = await getOverviewMetrics();
-        console.log("Overview metrics:", metricsData);
-        setMetrics(metricsData);
-      } catch (error) {
-        console.error("Error fetching overview metrics:", error);
-      } finally {
-        setLoadingOverview(false);
-      }
-    };
+  try {
+    metrics = await getOverviewMetrics();
+    console.log('Overview metrics:', metrics);
+  } catch (error) {
+    console.error('Error fetching overview metrics:', error);
+  }
 
-    fetchDashboardData();
-  }, []);
+  try {
+    recentPayments = await getRecentPayments();
+    console.log('Recent payments:', recentPayments);
+  } catch (error) {
+    console.error('Error fetching recent payments:', error);
+  }
 
-  useEffect(() => {
-    const fetchPaymentsData = async () => {
-      setLoadingPayments(true);
-      try {
-        const paymentsData = await getRecentPayments();
-        console.log("Recent payments:", paymentsData);
-        setRecentPayments(paymentsData);
-      } catch (error) {
-        console.error("Error fetching recent payments:", error);
-      } finally {
-        setLoadingPayments(false);
-      }
-    };
-
-    fetchPaymentsData();
-  }, []);
-
+  // Helper functions remain unchanged
   const calculateTotalBudget = (projects: Project[]) => {
     return projects.reduce((total, project) => total + project.budget, 0);
   };
@@ -73,15 +48,8 @@ export default function DashboardPage() {
     return projects.reduce((total, project) => total + (project.paymentSummary?.balance ?? 0), 0);
   };
 
+  // Render content based on the fetched data
   const renderContent = () => {
-    if (loadingOverview) {
-      return (
-        <div className="flex h-[400px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
     if (!metrics) {
       return (
         <div className="flex h-[400px] items-center justify-center">
@@ -102,7 +70,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                Rs {new Intl.NumberFormat("en-PK").format(metrics.totalToday)}
+                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalToday)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 +{((metrics.totalToday / metrics.totalMonth) * 100).toFixed(2)}% of monthly total
@@ -118,7 +86,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                Rs {new Intl.NumberFormat("en-PK").format(metrics.totalMonth)}
+                Rs {new Intl.NumberFormat('en-PK').format(metrics.totalMonth)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 For {new Date().toLocaleString('default', { month: 'long' })}
@@ -135,7 +103,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{metrics.projects.length}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Total Budget: Rs {new Intl.NumberFormat("en-PK").format(calculateTotalBudget(metrics.projects))}
+                Total Budget: Rs {new Intl.NumberFormat('en-PK').format(calculateTotalBudget(metrics.projects))}
               </p>
             </CardContent>
           </Card>
@@ -148,10 +116,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                Rs {new Intl.NumberFormat("en-PK").format(calculateTotalSpent(metrics.projects))}
+                Rs {new Intl.NumberFormat('en-PK').format(calculateTotalSpent(metrics.projects))}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Balance: Rs {new Intl.NumberFormat("en-PK").format(calculateTotalBalance(metrics.projects))}
+                Balance: Rs {new Intl.NumberFormat('en-PK').format(calculateTotalBalance(metrics.projects))}
               </p>
             </CardContent>
           </Card>
@@ -213,7 +181,7 @@ export default function DashboardPage() {
               <CardDescription>Your most recent payment activities</CardDescription>
             </CardHeader>
             <CardContent className="overflow-hidden">
-              <RenderPaymentsContent loadingPayments={loadingPayments} recentPayments={recentPayments} />
+              <RenderPaymentsContent loadingPayments={false} recentPayments={recentPayments} />
             </CardContent>
           </Card>
 
@@ -241,7 +209,7 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <div className="font-medium">
-                        Rs {new Intl.NumberFormat("en-PK").format(transfer.totalAmount)}
+                        Rs {new Intl.NumberFormat('en-PK').format(transfer.totalAmount)}
                       </div>
                     </div>
                   ))}
@@ -253,6 +221,7 @@ export default function DashboardPage() {
       </div>
     );
   };
+
   return (
     <div className="flex-1 space-y-8 p-8 pt-6">
       <div className="flex items-center justify-between">
