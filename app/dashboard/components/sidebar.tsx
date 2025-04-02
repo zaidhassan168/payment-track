@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut, User} from 'lucide-react';
 import { UserButton, useUser, SignOutButton,  } from "@clerk/nextjs";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ const navigation = [
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
   { name: "Projects", href: "/dashboard/projects", icon: FolderKanban },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Users", href: "/dashboard/users", icon: User },
+
 ];
 
 interface SidebarProps {
