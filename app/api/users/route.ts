@@ -1,7 +1,8 @@
 // app/api/users/route.ts
 import { auth } from '@/lib/firebase-admin';
 import { CreateUserData, FirebaseUser } from '@/types/user';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { errorResponse, successResponse, handleFirebaseAuthError } from '@/lib/api-utils';
 
 export async function GET() {
   try {
@@ -17,10 +18,9 @@ export async function GET() {
         lastSignInTime: user.metadata.lastSignInTime,
       },
     }));
-    return NextResponse.json(users);
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    return successResponse(users);
+  } catch (error: any) {
+    return errorResponse('Failed to fetch users', 500, error);
   }
 }
 
@@ -28,9 +28,8 @@ export async function POST(req: NextRequest) {
   try {
     const userData: CreateUserData = await req.json();
     const newUser = await auth.createUser(userData);
-    return NextResponse.json(newUser);
-  } catch (error) {
-    console.error('Failed to create user:', error);
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    return successResponse(newUser);
+  } catch (error: any) {
+    return handleFirebaseAuthError(error);
   }
 }

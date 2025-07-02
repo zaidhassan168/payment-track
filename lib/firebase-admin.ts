@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 
-// Check if Firebase Admin is already initialized
+// Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
     // Validate environment variables
@@ -9,16 +9,7 @@ if (!admin.apps.length) {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     if (!projectId || !clientEmail || !privateKey) {
-      console.error('Missing Firebase environment variables:');
-      console.error('FIREBASE_PROJECT_ID:', projectId ? '✓' : '✗');
-      console.error('FIREBASE_CLIENT_EMAIL:', clientEmail ? '✓' : '✗');
-      console.error('FIREBASE_PRIVATE_KEY:', privateKey ? '✓' : '✗');
-      throw new Error('Missing Firebase environment variables. Please check your .env.local file and ensure all required variables are set.');
-    }
-
-    // Validate private key format
-    if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
-      throw new Error('FIREBASE_PRIVATE_KEY appears to be malformed. It should include the full private key with BEGIN and END markers.');
+      throw new Error('Missing Firebase environment variables. Check your .env file.');
     }
 
     // Initialize Firebase Admin
@@ -34,70 +25,73 @@ if (!admin.apps.length) {
     console.log('Firebase Admin initialized successfully');
   } catch (error) {
     console.error('Failed to initialize Firebase Admin:', error);
-    // Don't throw the error here to prevent the app from crashing
-    // Instead, we'll handle this in the API routes
   }
 }
 
-// Export functions that check if Firebase is properly initialized
-export const isFirebaseInitialized = () => {
+/**
+ * Check if Firebase Admin is properly initialized
+ */
+export function isFirebaseInitialized() {
   return admin.apps.length > 0;
-};
+}
 
-export const getAuth = () => {
+/**
+ * Get Firebase Auth instance with initialization check
+ */
+export function getAuth() {
   if (!isFirebaseInitialized()) {
-    throw new Error('Firebase Admin is not properly initialized. Please check your environment variables.');
+    throw new Error('Firebase Admin is not properly initialized. Check your environment variables.');
   }
   return admin.auth();
-};
+}
 
-export const getDb = () => {
+/**
+ * Get Firebase Firestore instance with initialization check
+ */
+export function getDb() {
   if (!isFirebaseInitialized()) {
-    throw new Error('Firebase Admin is not properly initialized. Please check your environment variables.');
+    throw new Error('Firebase Admin is not properly initialized. Check your environment variables.');
   }
   return admin.firestore();
-};
+}
 
-// Keep the old exports for backward compatibility, but add safety checks
+/**
+ * Firebase Auth methods with error handling
+ */
 export const auth = {
-  listUsers: (maxResults?: number) => {
+  listUsers: async (maxResults?: number) => {
     if (!isFirebaseInitialized()) {
-      return Promise.reject(new Error('Firebase Admin is not properly initialized. Please check your environment variables.'));
+      throw new Error('Firebase Admin is not properly initialized');
     }
     return admin.auth().listUsers(maxResults);
   },
-  getUser: (uid: string) => {
+
+  getUser: async (uid: string) => {
     if (!isFirebaseInitialized()) {
-      return Promise.reject(new Error('Firebase Admin is not properly initialized. Please check your environment variables.'));
+      throw new Error('Firebase Admin is not properly initialized');
     }
     return admin.auth().getUser(uid);
   },
-  createUser: (data: any) => {
+
+  createUser: async (data: any) => {
     if (!isFirebaseInitialized()) {
-      return Promise.reject(new Error('Firebase Admin is not properly initialized. Please check your environment variables.'));
+      throw new Error('Firebase Admin is not properly initialized');
     }
     return admin.auth().createUser(data);
   },
-  updateUser: (uid: string, data: any) => {
+
+  updateUser: async (uid: string, data: any) => {
     if (!isFirebaseInitialized()) {
-      return Promise.reject(new Error('Firebase Admin is not properly initialized. Please check your environment variables.'));
+      throw new Error('Firebase Admin is not properly initialized');
     }
     return admin.auth().updateUser(uid, data);
   },
-  deleteUser: (uid: string) => {
+
+  deleteUser: async (uid: string) => {
     if (!isFirebaseInitialized()) {
-      return Promise.reject(new Error('Firebase Admin is not properly initialized. Please check your environment variables.'));
+      throw new Error('Firebase Admin is not properly initialized');
     }
     return admin.auth().deleteUser(uid);
-  }
-};
-
-export const db = {
-  collection: (name: string) => {
-    if (!isFirebaseInitialized()) {
-      throw new Error('Firebase Admin is not properly initialized. Please check your environment variables.');
-    }
-    return admin.firestore().collection(name);
   }
 };
 

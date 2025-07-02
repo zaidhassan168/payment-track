@@ -1,71 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth, getDb } from '@/lib/firebase-admin';
+import { NextRequest } from 'next/server';
+import { auth } from '@/lib/firebase-admin';
+import { errorResponse, successResponse, handleFirebaseAuthError } from '@/lib/api-utils';
+import { ensureUserDocument, getUserDocument } from '@/lib/user-service-server';
 
 // GET: Retrieve a user's role
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { uid: string } }
-) {
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const uid = searchParams.get('uid');
+
+  if (!uid) {
+    return errorResponse('User ID is required', 400);
+  }
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const uid = searchParams.get('uid');
-
-    if (!uid) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
     // Verify the user exists in Firebase Auth
     try {
       await auth.getUser(uid);
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'User not found in authentication system' },
-        { status: 404 }
-      );
+    } catch (error: any) {
+      return handleFirebaseAuthError(error, uid);
     }
 
-    // Get user data from Firestore
-    const db = getDb();
-
+    // Get or create user document with role
     try {
-      const userDoc = await db.collection('users').doc(uid).get();
+      // Just get the user document without modifying it
+      const userData = await getUserDocument(uid);
 
-      if (!userDoc.exists) {
-        // If no document exists in Firestore yet, create one with default role
-        const defaultUserData = {
-          uid,
-          role: 'user',
-          createdAt: new Date().toISOString()
-        };
-
-        await db.collection('users').doc(uid).set(defaultUserData);
-
-        return NextResponse.json(defaultUserData);
+      // If user document doesn't exist, create a default one
+      if (!userData) {
+        const defaultUserData = await ensureUserDocument(uid);
+        return successResponse({
+          ...defaultUserData
+        });
       }
 
-      const userData = userDoc.data();
-      console.log('User data retrieved:', userData);
-      return NextResponse.json({
-        uid,
-        role: userData?.role || 'user',
+      return successResponse({
         ...userData
       });
     } catch (error) {
-      console.error('Error accessing Firestore:', error);
-      return NextResponse.json(
-        { error: 'Database error while fetching user data' },
-        { status: 500 }
-      );
+      return errorResponse('Database error while fetching user data', 500, error);
     }
   } catch (error) {
-    console.error('Error fetching user role:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user role' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to fetch user role', 500, error);
   }
 }
 
@@ -74,64 +49,38 @@ export async function PATCH(request: NextRequest) {
   try {
     const { uid, role } = await request.json();
 
+    console.log(`PATCH /api/users/role received:`, { uid, role });
+
     if (!uid || !role) {
-      return NextResponse.json(
-        { error: 'User ID and role are required' },
-        { status: 400 }
-      );
+      return errorResponse('User ID and role are required', 400);
     }
 
     // Verify the user exists in Firebase Auth
     try {
       await auth.getUser(uid);
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'User not found in authentication system' },
-        { status: 404 }
-      );
+    } catch (error: any) {
+      return handleFirebaseAuthError(error, uid);
     }
 
     // Update user role in Firestore
-    const db = getDb();
-
     try {
-      const userRef = db.collection('users').doc(uid);
-      const userDoc = await userRef.get();
+      console.log(`Calling ensureUserDocument with uid=${uid}, role=${role}`);
 
-      // If document doesn't exist, create it with provided role
-      if (!userDoc.exists) {
-        await userRef.set({
-          uid,
-          role,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-      } else {
-        // Otherwise just update the role
-        await userRef.update({
-          role,
-          updatedAt: new Date().toISOString()
-        });
-      }
+      // Update or create user document with the new role
+      const userData = await ensureUserDocument(uid, role);
 
-      return NextResponse.json({
+      console.log('User role updated, response userData:', userData);
+
+      return successResponse({
         success: true,
         message: 'User role updated successfully',
         uid,
-        role
+        role: userData.role
       });
     } catch (error) {
-      console.error('Error updating Firestore:', error);
-      return NextResponse.json(
-        { error: 'Database error while updating user role' },
-        { status: 500 }
-      );
+      return errorResponse('Database error while updating user role', 500, error);
     }
   } catch (error) {
-    console.error('Error updating user role:', error);
-    return NextResponse.json(
-      { error: 'Failed to update user role' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to update user role', 500, error);
   }
 }
