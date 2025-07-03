@@ -3,9 +3,8 @@ import { FirebaseUser } from "@/types/user";
 import { getCompleteUserData } from "@/lib/user-service-server";
 
 interface UserDetailsPageProps {
-    params: { uid: string };
+    params: Promise<{ uid: string }>;
 }
-
 export default async function UserDetailsPage({ params }: UserDetailsPageProps) {
     try {
         // Await params to properly handle dynamic params in Next.js
