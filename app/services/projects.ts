@@ -17,7 +17,7 @@ export async function addStakeholder(projectId: string, stakeholder: Stakeholder
 
 
 export async function getProjects(): Promise<Project[]> {
-    const response = await fetch("/api/projects");
+    const response = await fetch("http://localhost:3000/api/projects");
     if (!response.ok) {
       throw new Error("Failed to fetch projects");
     }
