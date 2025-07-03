@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ProjectCard from "./ProjectCard";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-
+import { Project } from "@/types/index"; // Adjust the import path as necessary
 export default function ProjectsPageClient({ projects }: { projects: Project[] }) {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>(projects);
   const [isModalOpen, setIsModalOpen] = useState(false);
