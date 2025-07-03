@@ -1,41 +1,35 @@
 // app/api/users/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { clerkClient } from '@clerk/clerk-sdk-node';
-import {auth} from '@clerk/nextjs/server';
-// const clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY! });
+import { auth } from '@/lib/firebase-admin';
+import { CreateUserData, FirebaseUser } from '@/types/user';
+import { NextRequest } from 'next/server';
+import { errorResponse, successResponse, handleFirebaseAuthError } from '@/lib/api-utils';
 
 export async function GET() {
   try {
-    const user = await auth();
-    console.log('user', user);
-    const users = await clerkClient.users.getUserList({ limit: 10 });
-
-    const formattedUsers = users.map(user => ({
-      id: user.id,
-      email: user.emailAddresses[0]?.emailAddress,
-      role: user.publicMetadata?.role || null,
+    const userRecords = await auth.listUsers();
+    const users: FirebaseUser[] = userRecords.users.map(user => ({
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      emailVerified: user.emailVerified,
+      disabled: user.disabled,
+      metadata: {
+        creationTime: user.metadata.creationTime,
+        lastSignInTime: user.metadata.lastSignInTime,
+      },
     }));
-
-    return NextResponse.json(formattedUsers);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    return successResponse(users);
+  } catch (error: any) {
+    return errorResponse('Failed to fetch users', 500, error);
   }
 }
 
-export async function PUT(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { userId, role } = await req.json();
-
-    if (!userId || !['manager', 'engineer'].includes(role)) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
-    }
-
-    await clerkClient.users.updateUserMetadata(userId, {
-      publicMetadata: { role },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
+    const userData: CreateUserData = await req.json();
+    const newUser = await auth.createUser(userData);
+    return successResponse(newUser);
+  } catch (error: any) {
+    return handleFirebaseAuthError(error);
   }
 }
