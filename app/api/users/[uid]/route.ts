@@ -3,7 +3,7 @@ import { auth } from '@/lib/firebase-admin';
 import { UpdateUserData } from '@/types/user';
 // ...existing code...
 import { errorResponse, handleFirebaseAuthError, successResponse } from '@/lib/api-utils';
-import { getCompleteUserData } from '@/lib/user-service-server';
+import { getCompleteUserData, ensureUserDocument } from '@/lib/user-service-server';
 
 export async function GET(
   req: Request,
@@ -29,6 +29,8 @@ export async function PUT(
   try {
     const userData: UpdateUserData = await req.json();
     const updatedUser = await auth.updateUser(uid, userData);
+    // Also update the user document in Firestore
+    await ensureUserDocument(uid, undefined, userData.email, userData.displayName);
     return successResponse(updatedUser);
   } catch (error: any) {
     return handleFirebaseAuthError(error, uid);

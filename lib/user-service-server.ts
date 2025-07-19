@@ -9,6 +9,8 @@ import { FirebaseUser } from '@/types/user';
 export interface DefaultUserData {
   uid: string;
   role: string;
+  email?: string;
+  displayName?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -18,13 +20,20 @@ export interface DefaultUserData {
  * or update the role if it's provided and different from the existing one
  * @param uid User ID
  * @param role Default role (defaults to 'user')
+ * @param email User's email
+ * @param displayName User's display name
  * @returns The user data object
  */
-export async function ensureUserDocument(uid: string, role: string = 'user'): Promise<DefaultUserData> {
+export async function ensureUserDocument(
+  uid: string,
+  role: string = 'user',
+  email?: string,
+  displayName?: string
+): Promise<DefaultUserData> {
   const db = getDb();
   const userRef = db.collection('users').doc(uid);
 
-  console.log(`ensureUserDocument called with uid=${uid}, role=${role}`);
+  console.log(`ensureUserDocument called with uid=${uid}, role=${role}, email=${email}, displayName=${displayName}`);
 
   const userDoc = await userRef.get();
   const timestamp = new Date().toISOString();
@@ -34,6 +43,8 @@ export async function ensureUserDocument(uid: string, role: string = 'user'): Pr
     const defaultUserData: DefaultUserData = {
       uid,
       role,
+      email,
+      displayName,
       createdAt: timestamp,
       updatedAt: timestamp
     };
@@ -42,29 +53,26 @@ export async function ensureUserDocument(uid: string, role: string = 'user'): Pr
     return defaultUserData;
   }
 
-  // If a document exists and role is provided, update the role if it's different
+  // If a document exists, update it with new data if provided
   const userData = userDoc.data() as DefaultUserData;
+  const updateData: any = {
+    updatedAt: timestamp
+  };
 
   if (role && role !== userData.role) {
-    console.log(`Updating role for user ${uid} from ${userData.role} to ${role}`);
+    updateData.role = role;
+  }
+  if (email && email !== userData.email) {
+    updateData.email = email;
+  }
+  if (displayName && displayName !== userData.displayName) {
+    updateData.displayName = displayName;
+  }
 
-    // Create update data object with role and timestamp
-    const updateData = {
-      role: role, // Explicitly use the role parameter
-      updatedAt: timestamp
-    };
-
-    console.log('Update data:', updateData);
-
-    // Update the document
+  if (Object.keys(updateData).length > 1) {
+    console.log(`Updating user document for ${uid}:`, updateData);
     await userRef.update(updateData);
-
-    // Return the updated data
-    return {
-      ...userData,
-      role: role, // Explicitly use the role parameter
-      updatedAt: timestamp
-    };
+    return { ...userData, ...updateData };
   }
 
   return userData;

@@ -3,7 +3,7 @@ import { auth } from '@/lib/firebase-admin';
 import { CreateUserData, FirebaseUser } from '@/types/user';
 import { NextRequest } from 'next/server';
 import { errorResponse, successResponse, handleFirebaseAuthError } from '@/lib/api-utils';
-
+import { ensureUserDocument } from '@/lib/user-service-server';
 export async function GET() {
   try {
     const userRecords = await auth.listUsers();
@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
   try {
     const userData: CreateUserData = await req.json();
     const newUser = await auth.createUser(userData);
+    // Also create a user document in Firestore
+    await ensureUserDocument(newUser.uid, 'user', userData.email, userData.displayName);
     return successResponse(newUser);
   } catch (error: any) {
     return handleFirebaseAuthError(error);
