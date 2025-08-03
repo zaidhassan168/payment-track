@@ -16,7 +16,7 @@ interface ProcurementRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     request: ProcurementRequest;
-    onStatusUpdate: (requestId: string, status: ProcurementRequest['status']) => Promise<void>;
+    onStatusUpdate: (requestId: string, status: ProcurementRequest['status'], managerNote?: string) => Promise<void>;
     projects: Project[];
 }
 
@@ -47,7 +47,8 @@ export default function ProcurementRequestModal({
 
         setUpdating(true);
         try {
-            await onStatusUpdate(request.id!, newStatus);
+            await onStatusUpdate(request.id!, newStatus, managerNote.trim() || undefined);
+            setManagerNote(''); // Clear the note after successful update
             onClose();
         } catch (error) {
             console.error('Error updating status:', error);

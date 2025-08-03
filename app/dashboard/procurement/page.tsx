@@ -132,9 +132,9 @@ export default function ProcurementDashboard() {
         await loadRequests(false);
     };
 
-    const handleStatusUpdate = async (requestId: string, newStatus: ProcurementRequest['status']) => {
+    const handleStatusUpdate = async (requestId: string, newStatus: ProcurementRequest['status'], managerNote?: string) => {
         try {
-            await updateProcurementRequestStatus(requestId, newStatus, 'web-user', 'Web User');
+            await updateProcurementRequestStatus(requestId, newStatus, 'web-user', 'Web User', managerNote);
             showSuccessToast('Status updated successfully');
 
             // Refresh data
