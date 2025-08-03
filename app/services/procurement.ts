@@ -2,8 +2,9 @@
  * Client-side service for managing procurement requests
  */
 import { ProcurementRequest, ProcurementStats, ProcurementFilters } from '@/types/procurement';
+import { API_URL } from "@/app/config/api";
 
-const API_BASE = '/api/procurement';
+const API_BASE = API_URL ? `${API_URL}/api/procurement` : '/api/procurement';
 
 /**
  * Generic API request handler
@@ -23,7 +24,10 @@ async function apiRequest<T>(
             ...(body ? { body: JSON.stringify(body) } : {})
         };
 
-        const response = await fetch(url, options);
+        const response = await fetch(url, {
+            ...options,
+            cache: 'no-store'
+        });
         console.log(`Response status for ${url}:`, response.status);
 
         if (!response.ok) {

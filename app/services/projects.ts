@@ -21,7 +21,7 @@ export async function addStakeholder(projectId: string, stakeholder: Stakeholder
 export async function getProjects(): Promise<Project[]> {
   const url = API_URL ? `${API_URL}/api/projects` : "/api/projects";
   console.log('Fetching projects from:', url);
-  
+
   const response = await fetch(url, {
     cache: 'no-store'
   });

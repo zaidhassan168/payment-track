@@ -152,11 +152,16 @@ export default function ProcurementDashboard() {
     const filteredRequests = requests.filter(request => {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            return (
-                request.materialName.toLowerCase().includes(query) ||
-                request.projectName.toLowerCase().includes(query) ||
-                request.createdByName.toLowerCase().includes(query)
-            );
+            try {
+                return (
+                    (request.materialName?.toLowerCase().includes(query)) ||
+                    (request.projectName?.toLowerCase().includes(query)) ||
+                    (request.createdByName?.toLowerCase().includes(query))
+                );
+            } catch (error) {
+                console.error('Error filtering request:', error, request);
+                return false;
+            }
         }
         return true;
     });
