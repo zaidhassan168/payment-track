@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { ProjectTransfersAreaChart } from "./components/ProjectTransfersAreaChart";
 import { RenderPaymentsContent } from "./components/RenderPaymentsContent";
+import ProcurementOverview from "./components/ProcurementOverview";
 import { Project, Metrics, Payment } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -233,6 +234,9 @@ async function DashboardContent() {
     <>
       <MetricsCards metrics={metrics} />
       <ProjectsChart metrics={metrics} />
+      <Suspense fallback={<DashboardSkeleton />}>
+        <ProcurementOverview />
+      </Suspense>
       <RecentActivity metrics={metrics} payments={payments} />
     </>
   );

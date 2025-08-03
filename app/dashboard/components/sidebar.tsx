@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut, User} from 'lucide-react';
-import { UserButton, useUser, SignOutButton,  } from "@clerk/nextjs";
+import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut, User, Package } from 'lucide-react';
+import { UserButton, useUser, SignOutButton, } from "@clerk/nextjs";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 // import { Input } from "@/components/ui/input"; // Removed
@@ -17,6 +17,7 @@ const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
   { name: "Projects", href: "/dashboard/projects", icon: FolderKanban },
+  { name: "Procurement", href: "/dashboard/procurement", icon: Package },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
   { name: "Users", href: "/dashboard/users", icon: User },
 
@@ -98,10 +99,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                               isActive ? "text-primary" : "text-muted-foreground"
                             )} />
                             {!isCollapsed && (
-                                <span className={cn(
-                                  "flex-1",
-                                  isActive && "font-medium"
-                                )}>{item.name}</span>
+                              <span className={cn(
+                                "flex-1",
+                                isActive && "font-medium"
+                              )}>{item.name}</span>
                             )}
                           </Link>
                         </Button>
@@ -126,7 +127,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <UserButton
-                  
+
                   appearance={{
                     elements: {
                       userButtonAvatarBox: "w-8 h-8",

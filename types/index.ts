@@ -5,13 +5,16 @@ import { Item } from "@radix-ui/react-select";
 // If you want a clear representation of ISO date strings:
 export type ISODateString = string;
 
-export type PaymentCategory = 
-  | "income" 
+export type PaymentCategory =
+  | "income"
   | "extraIncome"
-  | "clientExpense" 
-  | "projectExpense" 
-  | "deduction" 
+  | "clientExpense"
+  | "projectExpense"
+  | "deduction"
   | "extraExpense";
+
+// Export procurement types
+export * from './procurement';
 
 // Payment Type
 export interface Item {
@@ -69,7 +72,7 @@ export interface Project {
   client: string;
   paymentTransferred: number;
   deadline?: ISODateString;  // Optional
-  stakeholders?: Stakeholder[]; 
+  stakeholders?: Stakeholder[];
   // Remove projectId if redundant. If you need a separate user-defined ID, rename it:
   // externalId?: string;
 
@@ -78,7 +81,7 @@ export interface Project {
 
 
 
-  
+
 
 export interface ProjectTransfer {
   projectName: string;

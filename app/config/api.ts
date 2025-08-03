@@ -1,2 +1,3 @@
 // Central API URL config for client-side fetches
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+// For client-side requests, use relative URLs to avoid scheme issues
+export const API_URL = "";
