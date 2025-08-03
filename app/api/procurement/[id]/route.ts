@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
+import { triggerProcurementNotification } from '@/lib/notification-utils';
+import { ProcurementRequestStatus } from '@/types/notifications';
 
 // GET: Retrieve a single procurement request by ID
 export async function GET(
@@ -106,6 +108,20 @@ export async function PATCH(
         }
 
         await docRef.update(updateData);
+
+        // Trigger notification for status change
+        try {
+            await triggerProcurementNotification(
+                id,
+                status as ProcurementRequestStatus,
+                currentData.projectName || 'Unknown Project',
+                currentData.materialName || 'Unknown Material',
+                currentData.createdBy || ''
+            );
+        } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+            // Don't fail the main request if notification fails
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {

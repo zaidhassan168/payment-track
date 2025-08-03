@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { ProcurementRequest, ProcurementStats } from '@/types/procurement';
+import { triggerProcurementNotification } from '@/lib/notification-utils';
+import { ProcurementRequestStatus } from '@/types/notifications';
 
 // GET: Retrieve procurement requests with filters
 export async function GET(request: Request) {
@@ -123,6 +125,20 @@ export async function POST(request: Request) {
         };
 
         const docRef = await db.collection('procurementRequests').add(procurementData);
+
+        // Trigger notification for new procurement request
+        try {
+            await triggerProcurementNotification(
+                docRef.id,
+                'pending' as ProcurementRequestStatus,
+                projectName || 'Unknown Project',
+                materialName,
+                createdBy
+            );
+        } catch (notificationError) {
+            console.error('Failed to send notification for new request:', notificationError);
+            // Don't fail the main request if notification fails
+        }
 
         return NextResponse.json({
             id: docRef.id,
