@@ -10,9 +10,18 @@ export async function getOverviewMetrics() {
     const protocol = host && host.startsWith("localhost") ? "http" : "https";
     url = `${protocol}://${host}/api/overview`;
   }
-  const response = await fetch(url, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Failed to fetch overview metrics");
+  console.log("Fetching overview metrics from:", url);
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    console.log("Overview metrics fetch status:", response.status);
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Overview metrics fetch error body:", text);
+      throw new Error("Failed to fetch overview metrics");
+    }
+    return response.json();
+  } catch (err) {
+    console.error("Overview metrics fetch exception:", err);
+    throw err;
   }
-  return response.json();
 }
