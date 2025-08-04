@@ -1,19 +1,17 @@
-import { API_URL } from "@/app/config/api";
-
 export async function getOverviewMetrics() {
-  // Use full URL for server-side requests, relative for client-side
-  const url = API_URL ? `${API_URL}/api/overview` : "/api/overview";
+  // Use full absolute URL on server, relative path on client
+  const isServer = typeof window === 'undefined';
+  const baseUrl = isServer
+    ? process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
+    : '';
+  const url = isServer ? `${baseUrl}/api/overview` : '/api/overview';
   console.log('Fetching overview from:', url);
 
-  const response = await fetch(url, {
-    // Add cache configuration for server-side rendering
-    cache: 'no-store'
-  });
-
+  const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error("Failed to fetch overview metrics");
+    throw new Error('Failed to fetch overview metrics');
   }
   return response.json();
 }
-
-//abc
