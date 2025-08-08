@@ -245,7 +245,20 @@ export default function ProcurementDashboard() {
                             />
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <Select value={filters.status || 'all'} onValueChange={(value) => setFilters(f => ({ ...f, status: value === 'all' ? undefined : value }))}>
+                            <Select
+                                value={filters.status || 'all'}
+                                onValueChange={(value) =>
+                                    setFilters((f) => ({
+                                        ...f,
+                                        // Explicitly narrow the Select value (string) to our status union;
+                                        // prevents TS from widening to `string` under stricter builds (e.g., Vercel)
+                                        status:
+                                            (value as ProcurementRequest['status'] | 'all') === 'all'
+                                                ? undefined
+                                                : (value as ProcurementRequest['status']),
+                                    }))
+                                }
+                            >
                                 <SelectTrigger className="w-full sm:w-[160px] bg-white dark:bg-gray-900">
                                     <SelectValue placeholder="Filter by status" />
                                 </SelectTrigger>
