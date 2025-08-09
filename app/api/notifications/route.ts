@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendPushNotifications } from '@/lib/notification-service';
 import { getRecipientsForStatus } from '@/lib/user-service';
-import { ApiResponse, ProcurementRequestStatus } from '@/types/notifications';
-
-interface NotificationRequestSnakeCase {
-    status: ProcurementRequestStatus;
-    project_name: string;
-    material_name: string;
-    created_by_uid: string;
-    request_id: string;
-}
+import { ApiResponse, ProcurementRequestStatus, NotificationRequestSnakeCase } from '@/types/notifications';
 
 export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     console.log(`[${requestId}] Notification API - Request started`, {
         timestamp: new Date().toISOString(),
         method: 'POST',
@@ -24,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        
+
         console.log(`[${requestId}] Notification API - Request body received`, {
             bodyKeys: Object.keys(body),
             bodySize: JSON.stringify(body).length,
@@ -56,27 +48,65 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString(),
         });
 
-        // Return immediate success response (async processing)
-        const response = NextResponse.json({
+        // Synchronous processing: determine recipients and send now
+        console.log(`[${requestId}] Notification API - Fetching recipients for status: ${status}`);
+        const recipients = await getRecipientsForStatus(status, created_by_uid);
+
+        console.log(`[${requestId}] Notification API - Recipients resolved`, {
+            count: recipients.length,
+            recipients: recipients.map(r => ({ uid: r.uid, email: r.email, role: r.role, hasExpoPushToken: !!r.expoPushToken })),
+        });
+
+        if (recipients.length === 0) {
+            console.warn(`[${requestId}] Notification API - No recipients found`, {
+                status,
+                created_by_uid,
+                duration: Date.now() - startTime,
+            });
+            return NextResponse.json({
+                success: true,
+                message: 'No recipients found for this status',
+                data: {
+                    request_id,
+                    status,
+                    sentCount: 0,
+                    errorCount: 0,
+                },
+            } as ApiResponse);
+        }
+
+        console.log(`[${requestId}] Notification API - Sending push notifications`, {
+            status,
+            project_name,
+            material_name,
+            request_id,
+            recipientCount: recipients.length,
+        });
+
+        const result = await sendPushNotifications(
+            recipients,
+            status,
+            project_name,
+            material_name,
+            request_id
+        );
+
+        console.log(`[${requestId}] Notification API - Synchronous send completed`, {
+            sentCount: result.sentCount,
+            errorCount: result.errorCount,
+            duration: Date.now() - startTime,
+        });
+
+        return NextResponse.json({
             success: true,
-            message: 'Notification job enqueued successfully',
+            message: 'Notifications sent successfully',
             data: {
                 request_id,
                 status,
-                job_id: requestId,
+                sentCount: result.sentCount,
+                errorCount: result.errorCount,
             },
         } as ApiResponse);
-
-        // Process notifications asynchronously (non-blocking)
-        console.log(`[${requestId}] Notification API - Enqueueing async processing for ${request_id}`);
-        processNotificationAsync(status, project_name, material_name, created_by_uid, request_id, requestId);
-
-        console.log(`[${requestId}] Notification API - Request completed successfully`, {
-            duration: Date.now() - startTime,
-            response: 'immediate_success',
-        });
-
-        return response;
 
     } catch (error) {
         console.error(`[${requestId}] Notification API - Request failed`, {
@@ -94,100 +124,16 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Process notifications asynchronously (non-blocking)
- */
-async function processNotificationAsync(
-    status: ProcurementRequestStatus,
-    project_name: string,
-    material_name: string,
-    created_by_uid: string,
-    request_id: string,
-    jobId: string
-): Promise<void> {
-    const processingStartTime = Date.now();
-    
-    console.log(`[${jobId}] Async Processing - Started`, {
-        procurementRequestId: request_id,
-        status,
-        project_name,
-        material_name,
-        created_by_uid,
-        timestamp: new Date().toISOString(),
-    });
-
-    try {
-        // Get recipients based on status
-        console.log(`[${jobId}] Async Processing - Fetching recipients for status: ${status}`);
-        const recipients = await getRecipientsForStatus(status, created_by_uid);
-
-        console.log(`[${jobId}] Async Processing - Recipients found`, {
-            recipientCount: recipients.length,
-            recipients: recipients.map(r => ({
-                uid: r.uid,
-                email: r.email,
-                role: r.role,
-                hasExpoPushToken: !!r.expoPushToken,
-                expoPushTokenPreview: r.expoPushToken ? `${r.expoPushToken.substring(0, 20)}...` : null,
-            })),
-        });
-
-        if (recipients.length === 0) {
-            console.warn(`[${jobId}] Async Processing - No recipients found`, {
-                status,
-                created_by_uid,
-                duration: Date.now() - processingStartTime,
-            });
-            return;
-        }
-
-        // Send push notifications
-        console.log(`[${jobId}] Async Processing - Sending push notifications`, {
-            recipientCount: recipients.length,
-            status,
-            project_name,
-            material_name,
-        });
-
-        const result = await sendPushNotifications(
-            recipients,
-            status,
-            project_name,
-            material_name,
-            request_id
-        );
-
-        console.log(`[${jobId}] Async Processing - Completed successfully`, {
-            procurementRequestId: request_id,
-            status,
-            sentCount: result.sentCount,
-            errorCount: result.errorCount,
-            duration: Date.now() - processingStartTime,
-            timestamp: new Date().toISOString(),
-        });
-
-    } catch (error) {
-        console.error(`[${jobId}] Async Processing - Failed`, {
-            procurementRequestId: request_id,
-            status,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : undefined,
-            duration: Date.now() - processingStartTime,
-            timestamp: new Date().toISOString(),
-        });
-    }
-}
-
-/**
  * Health check endpoint
  */
 export async function GET() {
     const healthCheckId = `health_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    
+
     console.log(`[${healthCheckId}] Health Check - Request received`, {
         timestamp: new Date().toISOString(),
         service: 'payment-track-notifications',
     });
-    
+
     try {
         const healthData = {
             timestamp: new Date().toISOString(),
@@ -197,9 +143,9 @@ export async function GET() {
             environment: process.env.NODE_ENV || 'unknown',
             expoTokenConfigured: !!process.env.EXPO_ACCESS_TOKEN,
         };
-        
+
         console.log(`[${healthCheckId}] Health Check - Service is healthy`, healthData);
-        
+
         return NextResponse.json({
             success: true,
             message: 'Notification service is healthy',
@@ -211,7 +157,7 @@ export async function GET() {
             stack: error instanceof Error ? error.stack : undefined,
             timestamp: new Date().toISOString(),
         });
-        
+
         return NextResponse.json({
             success: false,
             message: 'Health check failed',
