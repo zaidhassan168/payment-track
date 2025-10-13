@@ -1,18 +1,20 @@
-import { SignUp } from "@clerk/nextjs";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Page() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/dashboard");
+  }, [router]);
+
   return (
-    <div className="flex justify-center py-24 bg-gray-100">
-      <div className="max-w-md w-full bg-white p-8 rounded shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Create an Account</h2>
-        <SignUp signInFallbackRedirectUrl={"/dashboard"}
-          appearance={{
-            elements: {
-              card: "shadow-none",
-              formButtonPrimary: "bg-blue-500 hover:bg-blue-600",
-            },
-          }}
-        />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="max-w-md w-full bg-white p-8 rounded shadow-md text-center">
+        <h2 className="text-2xl font-bold mb-4">Authentication Disabled</h2>
+        <p className="text-muted-foreground mb-4">Redirecting to dashboard...</p>
       </div>
     </div>
   );

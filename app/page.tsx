@@ -1,6 +1,5 @@
 "use client";
 
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,7 @@ export default function Home() {
       />
 
       {/* Header */}
-      <motion.header 
+      <motion.header
         className="py-4 bg-background/80 backdrop-filter backdrop-blur-lg shadow-sm sticky top-0 z-50"
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,20 +64,11 @@ export default function Home() {
             <NavLink href="#pricing">Pricing</NavLink>
           </nav>
           <div>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="default" size="sm" className="button-gradient">
-                  Sign In
-                </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button variant="default" size="sm" className="button-gradient">
-                  Dashboard
-                </Button>
-              </Link>
-            </SignedIn>
+            <Link href="/dashboard">
+              <Button variant="default" size="sm" className="button-gradient">
+                Dashboard
+              </Button>
+            </Link>
           </div>
         </div>
       </motion.header>
@@ -87,7 +77,7 @@ export default function Home() {
       <section className="py-20 sm:py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Content */}
-          <motion.div 
+          <motion.div
             className="relative z-10"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -104,26 +94,16 @@ export default function Home() {
               with automated updates. Experience the future of financial management.
             </p>
             <div className="flex flex-col sm:flex-row items-start gap-4">
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full sm:w-auto button-gradient"
-                  >
-                    Try Now for Free
-                    <ArrowUpRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <Link href="/dashboard">
-                  <Button variant="default" size="lg" className="w-full sm:w-auto button-gradient">
-                    Go to Dashboard
-                    <ArrowUpRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              </SignedIn>
+              <Link href="/dashboard">
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full sm:w-auto button-gradient"
+                >
+                  Go to Dashboard
+                  <ArrowUpRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" className="w-full sm:w-auto">
                 <Play className="mr-2 h-5 w-5" />
                 Watch Demo
@@ -147,7 +127,7 @@ export default function Home() {
             />
           </motion.div>
         </div>
-        <motion.div 
+        <motion.div
           className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -162,7 +142,7 @@ export default function Home() {
         className="py-20 sm:py-32 bg-gradient"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -199,7 +179,7 @@ export default function Home() {
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 sm:py-32 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}

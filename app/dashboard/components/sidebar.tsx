@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LayoutDashboard, CreditCard, FolderKanban, Settings, Menu, HelpCircle, ChevronLeft, ChevronRight, LogOut, User, Package } from 'lucide-react';
-import { UserButton, useUser, SignOutButton, } from "@clerk/nextjs";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 // import { Input } from "@/components/ui/input"; // Removed
 const navigation = [
@@ -31,7 +30,6 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
-  const { user } = useUser();
   const [showSignOut, setShowSignOut] = useState(false);
 
   useEffect(() => {
@@ -126,47 +124,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           <div className="border-t border-border p-4">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-2">
-                <UserButton
-
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "w-8 h-8",
-                    },
-                  }}
-                />
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback>GU</AvatarFallback>
+                </Avatar>
                 {!isCollapsed && (
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">{user?.fullName}</span>
+                    <span className="text-sm font-medium">Guest User</span>
                     <span className="text-xs text-muted-foreground">
-                      {user?.primaryEmailAddress?.toString()}
+                      guest@example.com
                     </span>
                   </div>
                 )}
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className={cn("w-full justify-start", "bg-red-100")}>
-                    <LogOut className="h-4 w-4 text-red-500" />
-                    {!isCollapsed && <span>Sign Out</span>}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Confirm Sign Out</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to log out?
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <SignOutButton signOutOptions={{ redirectUrl: '/' }}>
-                      <Button variant="destructive">Sign Out</Button>
-                    </SignOutButton>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
